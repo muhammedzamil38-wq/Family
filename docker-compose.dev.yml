@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mongo:
+    # Optional development-only host mapping for local MongoDB GUI/CLI tools
+    ports:
+      - "27017:27017"
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    command: npm run dev
+    # Mount the local server code and keep container's node_modules isolated
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - server_uploads:/app/uploads
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongo:27017/family_library
+      - UPLOAD_DIR=/app/uploads
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    command: npm run dev
+    # Expose the Vite development server port
+    ports:
+      - "5173:5173"
+    # Mount local client code and keep container's node_modules isolated
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development

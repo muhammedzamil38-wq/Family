@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production / Build
+dist/
+build/
+
+# Uploads and User Assets
+server/uploads/pdfs/*
+!server/uploads/pdfs/.gitkeep
+server/uploads/covers/*
+!server/uploads/covers/.gitkeep
+server/uploads/images/*
+!server/uploads/images/.gitkeep
+
+# Environment variables (Secrets)
+env/backend.env
+env/frontend.env
+
+# Logs and Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

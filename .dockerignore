@@ -1,0 +1,35 @@
+# Dependencies and Builds
+node_modules/
+dist/
+build/
+.cache/
+
+# Local uploaded files
+server/uploads/pdfs/*
+server/uploads/covers/*
+server/uploads/images/*
+uploads/
+
+# Environment files
+env/backend.env
+env/frontend.env
+
+# Version Control
+.git/
+.gitignore
+
+# Logs and Coverage
+*.log
+npm-debug.log*
+coverage/
+.nyc_output/
+
+# OS/Editor configs
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

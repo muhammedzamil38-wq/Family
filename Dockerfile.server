@@ -1,0 +1,32 @@
+# Use an official lightweight Node.js image
+FROM node:20-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install OS-level dependencies: poppler-utils for PDF-to-image cover conversion (pdftoppm)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends poppler-utils && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy backend dependency declarations
+COPY server/package*.json ./
+
+# Install production dependencies only using package-lock.json
+RUN npm ci --only=production
+
+# Copy backend source code
+COPY server/ ./
+
+# Create upload subdirectories and set ownership to node user
+RUN mkdir -p uploads/pdfs uploads/covers uploads/images && \
+    chown -R node:node /app
+
+# Expose API port
+EXPOSE 5000
+
+# Run container as a non-root user (node)
+USER node
+
+# Start the application
+CMD ["npm", "start"]
