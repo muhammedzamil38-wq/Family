@@ -175,6 +175,16 @@ export async function verifyOtp(req, res) {
     user.lastLoginAt = new Date();
     await user.save();
 
+    await new Promise((resolve, reject) => {
+      req.session.save((saveError) => {
+        if (saveError) {
+          reject(saveError);
+        } else {
+          resolve();
+        }
+      });
+    });
+
     console.log(`[AUTH] Admin successfully authenticated with OTP: ${user.email}`);
 
     return res.json({
