@@ -22,11 +22,11 @@ The application stores assets inside the `server/uploads` directory. When runnin
 
 ## 3. Environment Configurations
 
-Both client and server expect environment files inside the `env/` folder. Examples are committed to Git:
-- **Server Configuration Template**: `env/backend.env.example` -> Copy to `env/backend.env`
-- **Client Configuration Template**: `env/frontend.env.example` -> Copy to `env/frontend.env`
+Each application owns its environment files. Examples are committed to Git:
+- **Server Configuration Template**: `server/env/backend.env.example` -> Copy to `server/env/backend.env`
+- **Client Configuration Template**: `client/env/frontend.env.example` -> Copy to `client/env/frontend.env`
 
-Make sure to populate `env/backend.env` with your secure session keys and administrator passwords before launching containers.
+Make sure to populate `server/env/backend.env` with your secure session keys and administrator passwords before launching containers.
 
 ---
 
@@ -65,8 +65,8 @@ Once the containers are up and running, you must run the database seed command t
 # Run database seeder inside the running server container
 docker compose exec server npm run seed
 ```
-- **Seed Administrator Email**: `admin@family.local` (or whatever is defined in `env/backend.env` as `INITIAL_ADMIN_EMAIL`)
-- **Seed Administrator Password**: `adminpassword123` (or whatever is defined in `env/backend.env` as `INITIAL_ADMIN_PASSWORD`)
+- **Seed Administrator Email**: `admin@family.local` (or whatever is defined in `server/env/backend.env` as `INITIAL_ADMIN_EMAIL`)
+- **Seed Administrator Password**: `adminpassword123` (or whatever is defined in `server/env/backend.env` as `INITIAL_ADMIN_PASSWORD`)
 
 > [!CAUTION]
 > **Database Reset Warning**

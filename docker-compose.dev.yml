@@ -8,8 +8,8 @@ services:
 
   server:
     build:
-      context: .
-      dockerfile: Dockerfile.server
+      context: ./server
+      dockerfile: Dockerfile
     command: npm run dev
     # Mount the local server code and keep container's node_modules isolated
     volumes:
@@ -25,8 +25,8 @@ services:
 
   client:
     build:
-      context: .
-      dockerfile: Dockerfile.client
+      context: ./client
+      dockerfile: Dockerfile
     command: npm run dev
     # Expose the Vite development server port
     ports:

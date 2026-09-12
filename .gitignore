@@ -16,8 +16,8 @@ server/uploads/images/*
 !server/uploads/images/.gitkeep
 
 # Environment variables (Secrets)
-env/backend.env
-env/frontend.env
+server/env/backend.env
+client/env/frontend.env
 
 # Logs and Debug
 npm-debug.log*

@@ -45,8 +45,8 @@ import { upload, checkUploadLimits } from './middleware/upload.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Explicitly load configuration from env/backend.env
-dotenv.config({ path: path.resolve(__dirname, '../env/backend.env') });
+// Explicitly load server-owned configuration.
+dotenv.config({ path: path.resolve(__dirname, 'env/backend.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;

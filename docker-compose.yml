@@ -17,12 +17,12 @@ services:
 
   server:
     build:
-      context: .
-      dockerfile: Dockerfile.server
+      context: ./server
+      dockerfile: Dockerfile
     container_name: family_server
     restart: always
     env_file:
-      - env/backend.env
+      - ./server/env/backend.env
     environment:
       - MONGODB_URI=mongodb://mongo:27017/family_library
       - UPLOAD_DIR=/app/uploads
@@ -43,8 +43,8 @@ services:
 
   client:
     build:
-      context: .
-      dockerfile: Dockerfile.client
+      context: ./client
+      dockerfile: Dockerfile
       args:
         - VITE_API_BASE_URL=http://localhost:5000
         - VITE_APP_NAME=Family Library & Heritage
