@@ -175,9 +175,13 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start listening
-app.listen(PORT, () => {
-  console.log(`Express API Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Authorized origin: ${FRONTEND_URL}`);
-});
+// Start listening locally; Vercel uses the exported Express app as its handler.
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Express API Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Authorized origin: ${FRONTEND_URL}`);
+  });
+}
+
+export default app;
