@@ -51,7 +51,8 @@ dotenv.config({ path: path.resolve(__dirname, 'env/backend.env') });
 const app = express();
 const PORT = process.env.PORT || 5000;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://mongo:27017/family_library';
+const isProduction = process.env.NODE_ENV === 'production';
+const MONGODB_URI = process.env.MONGODB_URI || (isProduction ? '' : 'mongodb://mongo:27017/family_library');
 const SESSION_SECRET = process.env.SESSION_SECRET || 'fallback_session_secret_12345';
 
 // 1. Database Connection
@@ -63,6 +64,10 @@ function connectToDatabase() {
   }
 
   if (!databaseConnection) {
+    if (!MONGODB_URI) {
+      return Promise.reject(new Error('MONGODB_URI is not configured.'));
+    }
+
     console.log('Connecting to MongoDB');
     databaseConnection = mongoose.connect(MONGODB_URI, {
       serverSelectionTimeoutMS: 10000,
@@ -91,6 +96,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.get('/', (req, res) => {
+  res.json({ service: 'family-heritage-api', status: 'running' });
+});
+
 // Vercel may invoke the function before MongoDB is connected.
 app.use(async (req, res, next) => {
   try {
@@ -109,11 +118,13 @@ app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: MONGODB_URI,
-    collectionName: 'sessions',
-    ttl: 14 * 24 * 60 * 60 // Sessions expire in 14 days
-  }),
+  ...(MONGODB_URI ? {
+    store: MongoStore.create({
+      mongoUrl: MONGODB_URI,
+      collectionName: 'sessions',
+      ttl: 14 * 24 * 60 * 60 // Sessions expire in 14 days
+    })
+  } : {}),
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
