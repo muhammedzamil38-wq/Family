@@ -55,13 +55,29 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://mongo:27017/family_lib
 const SESSION_SECRET = process.env.SESSION_SECRET || 'fallback_session_secret_12345';
 
 // 1. Database Connection
-console.log('Connecting to MongoDB at:', MONGODB_URI);
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Successfully connected to MongoDB.'))
-  .catch(err => {
-    console.error('Failed to connect to MongoDB:', err.message);
-    process.exit(1);
-  });
+let databaseConnection;
+
+function connectToDatabase() {
+  if (mongoose.connection.readyState === 1) {
+    return Promise.resolve();
+  }
+
+  if (!databaseConnection) {
+    console.log('Connecting to MongoDB');
+    databaseConnection = mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      maxPoolSize: 10
+    }).then(() => {
+      console.log('Successfully connected to MongoDB.');
+    }).catch((error) => {
+      databaseConnection = null;
+      console.error('Failed to connect to MongoDB:', error.message);
+      throw error;
+    });
+  }
+
+  return databaseConnection;
+}
 
 // 2. CORS Policy Configuration
 app.use(cors({
@@ -74,6 +90,19 @@ app.use(cors({
 // 3. Request Parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Vercel may invoke the function before MongoDB is connected.
+app.use(async (req, res, next) => {
+  try {
+    await connectToDatabase();
+    next();
+  } catch (error) {
+    res.status(503).json({
+      message: 'Database unavailable',
+      errors: ['The server could not connect to MongoDB.']
+    });
+  }
+});
 
 // 4. Session Configuration (using MongoStore for persistent sessions)
 app.use(session({
