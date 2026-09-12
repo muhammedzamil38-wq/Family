@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, User, Users, Calendar, Tag, Book } from 'lucide-react';
 
-const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.API_BASE_URL || 'http://localhost:5000';
 
 // Recursive Tree Node Component
 function TreeNode({ node, level = 0 }) {

@@ -44,8 +44,8 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        - VITE_API_BASE_URL=http://localhost:5000
-        - VITE_APP_NAME=Family Library & Heritage
+        - API_BASE_URL=http://localhost:5000
+        - APP_NAME=Family Library & Heritage
     container_name: family_client
     restart: always
     ports:

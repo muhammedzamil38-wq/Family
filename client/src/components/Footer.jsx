@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
-  const appName = import.meta.env.VITE_APP_NAME || 'Family Heritage';
+  const appName = import.meta.env.APP_NAME || 'Family Heritage';
 
   return (
     <footer className="glass-footer">

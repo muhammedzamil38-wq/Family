@@ -23,7 +23,7 @@ export default function Header() {
     }
   };
 
-  const appName = import.meta.env.VITE_APP_NAME || 'Family Heritage';
+  const appName = import.meta.env.APP_NAME || 'Family Heritage';
 
   return (
     <header className="glass-header">

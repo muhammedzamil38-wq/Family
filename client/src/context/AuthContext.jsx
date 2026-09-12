@@ -7,7 +7,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+    import.meta.env.API_BASE_URL || "http://localhost:5000";
 
   // Verify session on application startup
   const checkAuthStatus = async () => {

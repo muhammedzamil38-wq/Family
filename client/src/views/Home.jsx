@@ -21,7 +21,7 @@ export default function Home() {
   const [featuredPhotos, setFeaturedPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+  const API_BASE_URL = import.meta.env.API_BASE_URL || 'http://localhost:5000';
 
   useEffect(() => {
     async function fetchData() {
