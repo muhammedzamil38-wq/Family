@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mongo:
     # Optional development-only host mapping for local MongoDB GUI/CLI tools
