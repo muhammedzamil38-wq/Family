@@ -6,8 +6,9 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE_URL =
-    import.meta.env.API_BASE_URL || "http://localhost:5000";
+  const API_BASE_URL = (
+    import.meta.env.API_BASE_URL || "http://localhost:5000"
+  ).replace(/\/+$/, '');
 
   // Verify session on application startup
   const checkAuthStatus = async () => {

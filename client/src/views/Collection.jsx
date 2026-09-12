@@ -17,7 +17,7 @@ export default function Collection() {
 
   const { bookSlug } = useParams();
   const navigate = useNavigate();
-  const API_BASE_URL = import.meta.env.API_BASE_URL || 'http://localhost:5000';
+  const API_BASE_URL = (import.meta.env.API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
 
   // Fetch published books on mount
   useEffect(() => {

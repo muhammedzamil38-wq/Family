@@ -9,7 +9,7 @@ export default function Gallery() {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [isZoomed, setIsZoomed] = useState(false);
 
-  const API_BASE_URL = import.meta.env.API_BASE_URL || 'http://localhost:5000';
+  const API_BASE_URL = (import.meta.env.API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
 
   const getImageUrl = (imgPath) => {
     if (!imgPath) return '';
