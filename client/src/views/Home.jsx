@@ -80,9 +80,15 @@ export default function Home() {
       {/* 1. Hero Section */}
       <section 
         className="hero-section" 
-        style={{ backgroundImage: heroImageSrc ? `url(${heroImageSrc})` : 'none' }}
         aria-label="Welcome banner"
       >
+        {heroImageSrc && (
+          <img
+            className="hero-image"
+            src={heroImageSrc}
+            alt={hero?.altText || hero?.title || 'Family heritage'}
+          />
+        )}
         <div className="hero-overlay">
           <div className="hero-content glass-card">
             <h1 className="hero-title">{hero?.title || 'Our Family Archive'}</h1>

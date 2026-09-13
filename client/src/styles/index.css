@@ -92,7 +92,7 @@ p {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 32px;
   width: 100%;
 }
 
@@ -396,14 +396,23 @@ select.glass-input {
 }
 
 .hero-section {
-  height: 480px;
-  background-size: cover;
-  background-position: center;
+  min-height: 600px;
   background-color: #5c554e;
   position: relative;
   margin-bottom: 60px;
   display: flex;
   align-items: center;
+  overflow: hidden;
+}
+
+.hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  background: #5c554e;
 }
 
 .hero-overlay {
@@ -415,7 +424,8 @@ select.glass-input {
   background: linear-gradient(to right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
   display: flex;
   align-items: center;
-  padding: 0 40px;
+  padding: 0 32px;
+  z-index: 1;
 }
 
 .hero-content {
@@ -429,7 +439,7 @@ select.glass-input {
 
 @media (min-width: 768px) {
   .hero-content {
-    margin-left: 10%;
+    margin-left: 0;
     text-align: left;
   }
 }
