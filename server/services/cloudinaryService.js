@@ -38,6 +38,10 @@ export function uploadImage(buffer) {
   });
 }
 
+export function isCloudinaryError(error) {
+  return Boolean(error?.http_code || error?.name === 'AuthorizationRequiredError');
+}
+
 export function deleteImage(publicId) {
   if (!publicId) return Promise.resolve();
   configureCloudinary();

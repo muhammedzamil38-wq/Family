@@ -7,7 +7,7 @@ import SiteContent from '../models/SiteContent.js';
 import AuditLog from '../models/AuditLog.js';
 import Photo from '../models/Photo.js';
 import { generatePdfCover } from '../services/pdfService.js';
-import { deleteImage, uploadImage } from '../services/cloudinaryService.js';
+import { deleteImage, isCloudinaryError, uploadImage } from '../services/cloudinaryService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -989,9 +989,12 @@ export async function createPhoto(req, res) {
         console.warn('Could not clean up Cloudinary photo:', cleanupError.message);
       }
     }
-    return res.status(500).json({
-      message: 'Internal server error',
-      errors: [error.message]
+    const statusCode = isCloudinaryError(error) ? 502 : 500;
+    return res.status(statusCode).json({
+      message: statusCode === 502
+        ? 'Image storage provider rejected the upload.'
+        : 'Internal server error',
+      errors: process.env.NODE_ENV === 'development' ? [error.message] : []
     });
   }
 }
@@ -1095,9 +1098,12 @@ export async function updatePhoto(req, res) {
         console.warn('Could not clean up replacement Cloudinary photo:', cleanupError.message);
       }
     }
-    return res.status(500).json({
-      message: 'Internal server error',
-      errors: [error.message]
+    const statusCode = isCloudinaryError(error) ? 502 : 500;
+    return res.status(statusCode).json({
+      message: statusCode === 502
+        ? 'Image storage provider rejected the upload.'
+        : 'Internal server error',
+      errors: process.env.NODE_ENV === 'development' ? [error.message] : []
     });
   }
 }
