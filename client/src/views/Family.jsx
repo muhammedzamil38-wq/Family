@@ -33,7 +33,9 @@ function TreeNode({ node, level = 0 }) {
         <div className={`glass-card family-member-card ${node.portraitPath ? 'has-portrait' : ''}`}>
           {node.portraitPath ? (
             <img 
-              src={`${API_BASE_URL}/${node.portraitPath}`} 
+              src={node.portraitPath.startsWith('http://') || node.portraitPath.startsWith('https://')
+                ? node.portraitPath
+                : `${API_BASE_URL}/${node.portraitPath}`} 
               alt={node.fullName} 
               className="member-portrait" 
               loading="lazy"

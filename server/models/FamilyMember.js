@@ -28,6 +28,9 @@ const FamilyMemberSchema = new mongoose.Schema({
   portraitPath: {
     type: String
   },
+  portraitCloudinaryPublicId: {
+    type: String
+  },
   displayOrder: {
     type: Number,
     default: 0

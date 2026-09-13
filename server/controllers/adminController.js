@@ -431,7 +431,11 @@ async function deleteMemberAndDescendants(memberId) {
   }
 
   // Delete local portrait asset
-  if (member.portraitPath) {
+  if (member.portraitCloudinaryPublicId) {
+    try { await deleteImage(member.portraitCloudinaryPublicId); } catch (error) {
+      console.warn('Could not delete Cloudinary portrait:', error.message);
+    }
+  } else if (member.portraitPath) {
     const portraitAbsPath = path.resolve(__dirname, '..', member.portraitPath);
     if (fs.existsSync(portraitAbsPath)) {
       fs.unlinkSync(portraitAbsPath);
@@ -465,9 +469,9 @@ export async function getAllFamilyMembers(req, res) {
  */
 export async function createFamilyMember(req, res) {
   const { fullName, parentId, relationshipLabel, birthYear, deathYear, bio, displayOrder, isVisible } = req.body;
+  let uploadedPortraitPublicId;
 
   if (!fullName) {
-    if (req.file) fs.unlinkSync(req.file.path);
     return res.status(400).json({
       message: 'Validation error',
       errors: ['Full name is a required field.']
@@ -480,7 +484,6 @@ export async function createFamilyMember(req, res) {
     if (parentId && parentId !== 'null' && parentId !== '') {
       const parentExists = await FamilyMember.findById(parentId);
       if (!parentExists) {
-        if (req.file) fs.unlinkSync(req.file.path);
         return res.status(400).json({
           message: 'Validation error',
           errors: ['The selected parent record does not exist.']
@@ -489,7 +492,8 @@ export async function createFamilyMember(req, res) {
       dbParentId = parentId;
     }
 
-    const portraitPath = req.file ? `uploads/images/${path.basename(req.file.path)}` : '';
+    const uploadedPortrait = req.file ? await uploadImage(req.file.buffer) : null;
+    uploadedPortraitPublicId = uploadedPortrait?.cloudinaryPublicId;
 
     const member = new FamilyMember({
       fullName,
@@ -498,7 +502,8 @@ export async function createFamilyMember(req, res) {
       birthYear: birthYear ? parseInt(birthYear) : undefined,
       deathYear: deathYear ? parseInt(deathYear) : undefined,
       bio: bio || '',
-      portraitPath,
+      portraitPath: uploadedPortrait?.imageUrl || '',
+      portraitCloudinaryPublicId: uploadedPortrait?.cloudinaryPublicId || '',
       displayOrder: parseInt(displayOrder) || 0,
       isVisible: isVisible === undefined ? true : isVisible === 'true' || isVisible === true
     });
@@ -519,10 +524,15 @@ export async function createFamilyMember(req, res) {
     });
   } catch (error) {
     console.error('Error creating family member:', error);
-    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    return res.status(500).json({
-      message: 'Internal server error',
-      errors: [error.message]
+    if (uploadedPortraitPublicId) {
+      try { await deleteImage(uploadedPortraitPublicId); } catch (cleanupError) {
+        console.warn('Could not clean up Cloudinary portrait:', cleanupError.message);
+      }
+    }
+    const statusCode = isCloudinaryError(error) ? 502 : 500;
+    return res.status(statusCode).json({
+      message: statusCode === 502 ? 'Image storage provider rejected the portrait upload.' : 'Internal server error',
+      errors: statusCode === 502 ? [`Cloudinary rejected the upload (${error.http_code || 'unknown'}).`] : [error.message]
     });
   }
 }
@@ -534,11 +544,11 @@ export async function createFamilyMember(req, res) {
 export async function updateFamilyMember(req, res) {
   const { id } = req.params;
   const { fullName, parentId, relationshipLabel, birthYear, deathYear, bio, displayOrder, isVisible } = req.body;
+  let replacementPortraitPublicId;
 
   try {
     const member = await FamilyMember.findById(id);
     if (!member) {
-      if (req.file) fs.unlinkSync(req.file.path);
       return res.status(404).json({
         message: 'Family member not found',
         errors: ['The specified family member does not exist.']
@@ -553,7 +563,6 @@ export async function updateFamilyMember(req, res) {
 
         // 1. Prevent self-parenting
         if (nextParentId.toString() === id.toString()) {
-          if (req.file) fs.unlinkSync(req.file.path);
           return res.status(400).json({
             message: 'Cycle detected',
             errors: ['A family member cannot be set as their own parent.']
@@ -563,7 +572,6 @@ export async function updateFamilyMember(req, res) {
         // 2. Prevent ancestor cycles (making a descendant the parent of an ancestor)
         const causesCycle = await isDescendant(id, nextParentId);
         if (causesCycle) {
-          if (req.file) fs.unlinkSync(req.file.path);
           return res.status(400).json({
             message: 'Cycle detected',
             errors: ['Cannot assign a descendant as a parent. This creates a loop in the family tree.']
@@ -573,7 +581,6 @@ export async function updateFamilyMember(req, res) {
         // Verify parent exists
         const parentExists = await FamilyMember.findById(nextParentId);
         if (!parentExists) {
-          if (req.file) fs.unlinkSync(req.file.path);
           return res.status(400).json({
             message: 'Validation error',
             errors: ['The selected parent record does not exist.']
@@ -597,15 +604,21 @@ export async function updateFamilyMember(req, res) {
 
     // Handle portrait replacements
     if (req.file) {
-      const serverRoot = path.resolve(__dirname, '..');
-      const oldPortraitPath = member.portraitPath ? path.join(serverRoot, member.portraitPath) : null;
-      if (oldPortraitPath && fs.existsSync(oldPortraitPath)) {
-        try { fs.unlinkSync(oldPortraitPath); } catch (e) {}
-      }
-      member.portraitPath = `uploads/images/${path.basename(req.file.path)}`;
-    }
+      const uploadedPortrait = await uploadImage(req.file.buffer);
+      replacementPortraitPublicId = uploadedPortrait.cloudinaryPublicId;
+      const oldPublicId = member.portraitCloudinaryPublicId;
+      member.portraitPath = uploadedPortrait.imageUrl;
+      member.portraitCloudinaryPublicId = uploadedPortrait.cloudinaryPublicId;
+      await member.save();
 
-    await member.save();
+      if (oldPublicId) {
+        try { await deleteImage(oldPublicId); } catch (error) {
+          console.warn('Could not remove old Cloudinary portrait:', error.message);
+        }
+      }
+    } else {
+      await member.save();
+    }
 
     await logAdminAction(
       req.session.user.id,
@@ -621,10 +634,15 @@ export async function updateFamilyMember(req, res) {
     });
   } catch (error) {
     console.error('Error updating family member:', error);
-    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    return res.status(500).json({
-      message: 'Internal server error',
-      errors: [error.message]
+    if (replacementPortraitPublicId) {
+      try { await deleteImage(replacementPortraitPublicId); } catch (cleanupError) {
+        console.warn('Could not clean up replacement Cloudinary portrait:', cleanupError.message);
+      }
+    }
+    const statusCode = isCloudinaryError(error) ? 502 : 500;
+    return res.status(statusCode).json({
+      message: statusCode === 502 ? 'Image storage provider rejected the portrait upload.' : 'Internal server error',
+      errors: statusCode === 502 ? [`Cloudinary rejected the upload (${error.http_code || 'unknown'}).`] : [error.message]
     });
   }
 }
@@ -711,7 +729,11 @@ export async function deleteFamilyMember(req, res) {
     }
 
     // Safe deletion of single member (and their portrait asset)
-    if (member.portraitPath) {
+    if (member.portraitCloudinaryPublicId) {
+      try { await deleteImage(member.portraitCloudinaryPublicId); } catch (error) {
+        console.warn('Could not delete Cloudinary portrait:', error.message);
+      }
+    } else if (member.portraitPath) {
       const portraitAbsPath = path.resolve(__dirname, '..', member.portraitPath);
       if (fs.existsSync(portraitAbsPath)) {
         fs.unlinkSync(portraitAbsPath);

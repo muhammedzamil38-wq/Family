@@ -40,7 +40,7 @@ import {
 
 // Import Middleware
 import { requireAdmin } from './middleware/auth.js';
-import { upload, uploadPhoto, uploadHero, checkUploadLimits } from './middleware/upload.js';
+import { upload, uploadPhoto, uploadHero, uploadPortrait, checkUploadLimits } from './middleware/upload.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -195,8 +195,8 @@ app.delete('/api/v1/admin/books/:id', requireAdmin, deleteBook);
 
 // Family Tree Management
 app.get('/api/v1/admin/family-members', requireAdmin, getAllFamilyMembers);
-app.post('/api/v1/admin/family-members', requireAdmin, upload.single('portrait'), checkUploadLimits, createFamilyMember);
-app.patch('/api/v1/admin/family-members/:id', requireAdmin, upload.single('portrait'), checkUploadLimits, updateFamilyMember);
+app.post('/api/v1/admin/family-members', requireAdmin, uploadPortrait.single('portrait'), checkUploadLimits, createFamilyMember);
+app.patch('/api/v1/admin/family-members/:id', requireAdmin, uploadPortrait.single('portrait'), checkUploadLimits, updateFamilyMember);
 app.delete('/api/v1/admin/family-members/:id', requireAdmin, deleteFamilyMember);
 
 // Photo Gallery Management

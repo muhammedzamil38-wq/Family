@@ -1046,7 +1046,9 @@ export default function AdminPanel() {
                               <td>
                                 <div className="table-portrait-wrapper">
                                   {member.portraitPath ? (
-                                    <img src={`${API_BASE_URL}/${member.portraitPath}`} alt={member.fullName} className="table-portrait" />
+                                    <img src={member.portraitPath.startsWith('http://') || member.portraitPath.startsWith('https://')
+                                      ? member.portraitPath
+                                      : `${API_BASE_URL}/${member.portraitPath}`} alt={member.fullName} className="table-portrait" />
                                   ) : (
                                     <div className="table-portrait-fallback"><Users size={16} /></div>
                                   )}

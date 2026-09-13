@@ -93,6 +93,14 @@ export const uploadHero = multer({
   }
 });
 
+export const uploadPortrait = multer({
+  storage: multer.memoryStorage(),
+  fileFilter,
+  limits: {
+    fileSize: maxImageSizeBytes
+  }
+});
+
 /**
  * Middleware to enforce strict, granular file size limits.
  * Deletes uploaded file from disk if it violates size guidelines.
