@@ -1743,6 +1743,10 @@ select.glass-input {
   display: table-cell;
 }
 
+.desktop-member-detail {
+  display: table-cell;
+}
+
 .member-details-modal {
   width: 100%;
   max-width: 620px;
@@ -3766,6 +3770,10 @@ select.glass-input {
   }
 
   .desktop-member-actions {
+    display: none;
+  }
+
+  .desktop-member-detail {
     display: none;
   }
 

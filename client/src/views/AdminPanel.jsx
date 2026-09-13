@@ -1060,6 +1060,10 @@ export default function AdminPanel() {
                         <th>Portrait</th>
                         <th>Full Name</th>
                         <th>Root</th>
+                        <th className="desktop-member-detail">Relationship</th>
+                        <th className="desktop-member-detail">Years</th>
+                        <th className="desktop-member-detail">Sort Order</th>
+                        <th className="desktop-member-detail">Visible</th>
                         <th className="desktop-member-actions">Actions</th>
                       </tr>
                     </thead>
@@ -1083,6 +1087,18 @@ export default function AdminPanel() {
                               </td>
                               <td><strong>{member.fullName}</strong></td>
                               <td><span className="parent-indicator">{parentName}</span></td>
+                              <td className="desktop-member-detail"><span className="relationship-badge">{member.relationshipLabel || '—'}</span></td>
+                              <td className="desktop-member-detail">
+                                {[member.birthYear, member.deathYear].filter(y => y !== undefined && y !== null).join(' – ') || '—'}
+                              </td>
+                              <td className="desktop-member-detail">{member.displayOrder}</td>
+                              <td className="desktop-member-detail">
+                                {member.isVisible ? (
+                                  <span className="visibility-badge visible"><Eye size={14} /> Yes</span>
+                                ) : (
+                                  <span className="visibility-badge hidden"><EyeOff size={14} /> No</span>
+                                )}
+                              </td>
                               <td className="desktop-member-actions">
                                 <div className="table-actions">
                                   <button
@@ -1106,7 +1122,7 @@ export default function AdminPanel() {
                         })
                       ) : (
                         <tr>
-                          <td colSpan="4" className="table-empty">
+                          <td colSpan="8" className="table-empty">
                             {familyMembers.length > 0 ? 'No family members match your search.' : 'No family member records found. Start by adding a founding member parent.'}
                           </td>
                         </tr>
