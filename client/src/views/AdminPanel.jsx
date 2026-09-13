@@ -6,7 +6,7 @@ import {
   LayoutDashboard, BookOpen, Users, FileText, Settings, 
   LogOut, Plus, Edit, Trash2, Globe, Eye, EyeOff, 
   Upload, AlertTriangle, Save, RefreshCw, X, ChevronRight, Check,
-  Camera, Image as ImageIcon, MapPin, Calendar, Tag
+  Camera, Image as ImageIcon, MapPin, Calendar, Tag, Search
 } from 'lucide-react';
 import DynamicIcon from '../components/DynamicIcon';
 
@@ -75,6 +75,7 @@ export default function AdminPanel() {
   const [memberIsVisible, setMemberIsVisible] = useState(true);
   const [memberPortraitFile, setMemberPortraitFile] = useState(null);
   const [parentSearchQuery, setParentSearchQuery] = useState('');
+  const [familySearchQuery, setFamilySearchQuery] = useState('');
 
   // 3. Family Delete Strategy Form
   const [deleteStrategy, setDeleteStrategy] = useState('delete_branch'); // 'delete_branch' | 'move_children'
@@ -752,6 +753,12 @@ export default function AdminPanel() {
       return true;
     });
 
+  const filteredFamilyMembers = familyMembers.filter((member) => {
+    const parentName = familyMembers.find(m => m._id === member.parentId)?.fullName || 'None (Founder)';
+    const searchText = [member.fullName, parentName, member.relationshipLabel].filter(Boolean).join(' ').toLowerCase();
+    return searchText.includes(familySearchQuery.trim().toLowerCase());
+  });
+
   if (authLoading) {
     return (
       <div className="loading-container">
@@ -1019,6 +1026,28 @@ export default function AdminPanel() {
             {activeTab === 'family' && (
               <div className="family-cms-view animate-fade-in">
                 <div className="cms-toolbar family-cms-toolbar">
+                  <div className="family-search-control">
+                    <Search size={17} className="family-search-icon" />
+                    <input
+                      type="search"
+                      className="family-search-input"
+                      placeholder="Search family members..."
+                      value={familySearchQuery}
+                      onChange={(event) => setFamilySearchQuery(event.target.value)}
+                      aria-label="Search family members"
+                    />
+                    {familySearchQuery && (
+                      <button
+                        type="button"
+                        className="family-search-clear"
+                        onClick={() => setFamilySearchQuery('')}
+                        aria-label="Clear family member search"
+                        title="Clear search"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
                   <button onClick={() => openMemberForm(null)} className="btn btn-primary family-add-btn">
                     <Plus size={16} /> Add Family Member
                   </button>
@@ -1035,8 +1064,8 @@ export default function AdminPanel() {
                       </tr>
                     </thead>
                     <tbody>
-                      {familyMembers.length > 0 ? (
-                        familyMembers.map((member) => {
+                      {filteredFamilyMembers.length > 0 ? (
+                        filteredFamilyMembers.map((member) => {
                           const parentName = familyMembers.find(m => m._id === member.parentId)?.fullName || 'None (Founder)';
 
                           return (
@@ -1077,7 +1106,9 @@ export default function AdminPanel() {
                         })
                       ) : (
                         <tr>
-                          <td colSpan="4" className="table-empty">No family member records found. Start by adding a founding member parent.</td>
+                          <td colSpan="4" className="table-empty">
+                            {familyMembers.length > 0 ? 'No family members match your search.' : 'No family member records found. Start by adding a founding member parent.'}
+                          </td>
                         </tr>
                       )}
                     </tbody>

@@ -1532,6 +1532,59 @@ select.glass-input {
   text-align: center;
 }
 
+.family-search-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 280px;
+  min-width: 0;
+  max-width: 420px;
+}
+
+.family-search-icon {
+  position: absolute;
+  left: 13px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.family-search-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 40px 10px 40px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  font: inherit;
+  outline: none;
+}
+
+.family-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.family-search-clear {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.family-search-clear:hover {
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
 .table-card {
   padding: 0;
   overflow-x: auto;
@@ -3698,6 +3751,18 @@ select.glass-input {
 
   .family-cms-toolbar .family-add-btn {
     width: 100%;
+  }
+
+  .family-cms-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .family-search-control {
+    width: 100%;
+    max-width: none;
+    flex-basis: auto;
   }
 
   .desktop-member-actions {
