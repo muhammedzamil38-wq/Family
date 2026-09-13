@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Camera, X, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut, Sparkles } from 'lucide-react';
+import { Camera, X, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut, Sparkles, Video } from 'lucide-react';
 
 export default function Gallery() {
   const [photos, setPhotos] = useState([]);
+  const [mediaFilter, setMediaFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   
   // Lightbox State
@@ -18,6 +19,10 @@ export default function Gallery() {
     const cleanPath = uploadIndex !== -1 ? imgPath.slice(uploadIndex) : imgPath.replace(/\\/g, '/').replace(/^\/+/, '');
     return `${API_BASE_URL}/${cleanPath}`;
   };
+
+  const filteredPhotos = mediaFilter === 'all'
+    ? photos
+    : photos.filter((photo) => (photo.resourceType || 'image') === mediaFilter);
 
   // Fetch all public photos on mount.
   useEffect(() => {
@@ -57,16 +62,20 @@ export default function Gallery() {
   };
 
   const nextPhoto = useCallback(() => {
-    if (lightboxIndex === null || photos.length === 0) return;
-    setLightboxIndex((prev) => (prev + 1) % photos.length);
+    if (lightboxIndex === null || filteredPhotos.length === 0) return;
+    setLightboxIndex((prev) => (prev + 1) % filteredPhotos.length);
     setIsZoomed(false);
-  }, [lightboxIndex, photos.length]);
+  }, [lightboxIndex, filteredPhotos.length]);
 
   const prevPhoto = useCallback(() => {
-    if (lightboxIndex === null || photos.length === 0) return;
-    setLightboxIndex((prev) => (prev - 1 + photos.length) % photos.length);
+    if (lightboxIndex === null || filteredPhotos.length === 0) return;
+    setLightboxIndex((prev) => (prev - 1 + filteredPhotos.length) % filteredPhotos.length);
     setIsZoomed(false);
-  }, [lightboxIndex, photos.length]);
+  }, [lightboxIndex, filteredPhotos.length]);
+
+  useEffect(() => {
+    setLightboxIndex(null);
+  }, [mediaFilter]);
 
   // Keyboard navigation for lightbox
   useEffect(() => {
@@ -81,7 +90,7 @@ export default function Gallery() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [lightboxIndex, nextPhoto, prevPhoto]);
 
-  const activePhoto = lightboxIndex !== null ? photos[lightboxIndex] : null;
+  const activePhoto = lightboxIndex !== null ? filteredPhotos[lightboxIndex] : null;
 
   return (
     <div className="gallery-view">
@@ -93,8 +102,21 @@ export default function Gallery() {
           </div>
           <h1 className="page-title">Ancestral Photo Gallery</h1>
           <p className="page-subtitle">
-            A preserved visual chronicle of vintage moments, family portraits, gatherings, and historical landmarks across generations.
+            A preserved visual chronicle of family photographs, videos, gatherings, and historical landmarks across generations.
           </p>
+        </div>
+
+        <div className="gallery-media-filters" role="group" aria-label="Filter gallery media">
+          {['all', 'image', 'video'].map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              className={`decade-pill ${mediaFilter === filter ? 'active' : ''}`}
+              onClick={() => setMediaFilter(filter)}
+            >
+              {filter === 'all' ? 'All media' : filter === 'image' ? 'Photos' : 'Videos'}
+            </button>
+          ))}
         </div>
 
         {/* Photos Grid / Masonry */}
@@ -103,22 +125,25 @@ export default function Gallery() {
             <div className="spinner"></div>
             <p>Gathering photographs from the archive...</p>
           </div>
-        ) : photos.length > 0 ? (
+        ) : filteredPhotos.length > 0 ? (
           <>
             <div className="gallery-grid">
-              {photos.map((photo, index) => (
+              {filteredPhotos.map((photo, index) => (
                 <div 
                   key={photo._id} 
                   className="gallery-card glass-card"
                   onClick={() => openLightbox(index)}
                 >
                   <div className="gallery-image-wrapper">
-                    <img
-                      src={getImageUrl(photo.imageUrl || photo.imagePath)}
-                      alt={photo.title}
-                      className="gallery-image"
-                      loading="lazy"
-                    />
+                    {(photo.resourceType || 'image') === 'video' ? (
+                      <video src={getImageUrl(photo.imageUrl)} className="gallery-image" muted preload="metadata" />
+                    ) : (
+                      <img src={getImageUrl(photo.imageUrl || photo.imagePath)} alt={photo.title} className="gallery-image" loading="lazy" />
+                    )}
+                    <span className="gallery-media-badge">
+                      {(photo.resourceType || 'image') === 'video' ? <Video size={14} /> : <Camera size={14} />}
+                      {(photo.resourceType || 'image') === 'video' ? 'Video' : 'Photo'}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -142,7 +167,7 @@ export default function Gallery() {
             {/* Top Toolbar */}
             <div className="lightbox-top-bar">
               <div className="lightbox-counter">
-                {lightboxIndex + 1} / {photos.length}
+                {lightboxIndex + 1} / {filteredPhotos.length}
               </div>
 
               <div className="lightbox-controls">
@@ -151,6 +176,7 @@ export default function Gallery() {
                   className="lightbox-btn"
                   title={isZoomed ? "Zoom Out" : "Zoom In"}
                   aria-label="Toggle zoom"
+                  disabled={activePhoto.resourceType === 'video'}
                 >
                   {isZoomed ? <ZoomOut size={18} /> : <ZoomIn size={18} />}
                 </button>
@@ -181,7 +207,7 @@ export default function Gallery() {
             {/* Main Lightbox Content Area */}
             <div className="lightbox-main-view">
               {/* Previous Button */}
-              {photos.length > 1 && (
+              {filteredPhotos.length > 1 && (
                 <button
                   onClick={prevPhoto}
                   className="lightbox-nav-btn prev"
@@ -194,15 +220,15 @@ export default function Gallery() {
 
               {/* Photo View Container */}
               <div className={`lightbox-image-container ${isZoomed ? 'zoomed' : ''}`}>
-                <img
-                  src={getImageUrl(activePhoto.imageUrl || activePhoto.imagePath)}
-                  alt={activePhoto.title}
-                  className="lightbox-image"
-                />
+                {(activePhoto.resourceType || 'image') === 'video' ? (
+                  <video src={getImageUrl(activePhoto.imageUrl)} className="lightbox-image lightbox-video" controls autoPlay />
+                ) : (
+                  <img src={getImageUrl(activePhoto.imageUrl || activePhoto.imagePath)} alt={activePhoto.title} className="lightbox-image" />
+                )}
               </div>
 
               {/* Next Button */}
-              {photos.length > 1 && (
+              {filteredPhotos.length > 1 && (
                 <button
                   onClick={nextPhoto}
                   className="lightbox-nav-btn next"

@@ -6,7 +6,7 @@ import {
   LayoutDashboard, BookOpen, Users, FileText, Settings, 
   LogOut, Plus, Edit, Trash2, Globe, Eye, EyeOff, 
   Upload, AlertTriangle, Save, RefreshCw, X, ChevronRight, Check,
-  Camera, Image as ImageIcon, MapPin, Calendar, Tag, Search
+  Camera, Image as ImageIcon, Video, MapPin, Calendar, Tag, Search
 } from 'lucide-react';
 import DynamicIcon from '../components/DynamicIcon';
 
@@ -1420,11 +1420,11 @@ export default function AdminPanel() {
                     {photos.map((photo) => (
                       <div key={photo._id} className="admin-photo-card glass-card">
                         <div className="admin-photo-thumb-wrapper">
-                          <img
-                            src={getImageUrl(photo.imageUrl || photo.imagePath)}
-                            alt="Family photograph"
-                            className="admin-photo-thumb"
-                          />
+                          {(photo.resourceType || 'image') === 'video' ? (
+                            <video src={getImageUrl(photo.imageUrl)} className="admin-photo-thumb" muted preload="metadata" />
+                          ) : (
+                            <img src={getImageUrl(photo.imageUrl || photo.imagePath)} alt="Family photograph" className="admin-photo-thumb" />
+                          )}
                         </div>
 
                         <div className="admin-photo-card-actions">
@@ -1840,7 +1840,7 @@ export default function AdminPanel() {
         <div className="modal-backdrop" onClick={() => setShowPhotoModal(false)}>
           <div className="glass-card cms-modal photo-cms-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{editingPhoto ? 'Replace Photograph' : 'Upload Vintage Photograph'}</h3>
+              <h3>{editingPhoto ? 'Replace Gallery Media' : 'Upload Gallery Media'}</h3>
               <button className="modal-close" onClick={() => setShowPhotoModal(false)}><X size={20} /></button>
             </div>
 
@@ -1848,7 +1848,7 @@ export default function AdminPanel() {
               {/* Photo Image Dropzone / Preview */}
               <div className="form-group">
                 <label className="form-label">
-                  Photograph Image {!editingPhoto && <span className="required-star">*</span>}
+                    Photo or Video {!editingPhoto && <span className="required-star">*</span>}
                 </label>
                 
                 <div className="photo-upload-dropzone">
@@ -1856,7 +1856,11 @@ export default function AdminPanel() {
                     <div className="photo-preview-container">
                       <div className="photo-preview-grid">
                         {photoPreviewUrls.map((previewUrl, index) => (
-                          <img key={previewUrl} src={previewUrl} alt={`Preview ${index + 1}`} className="photo-preview-image" />
+                          photoFiles[index]?.type.startsWith('video/') ? (
+                            <video key={previewUrl} src={previewUrl} className="photo-preview-image" muted controls />
+                          ) : (
+                            <img key={previewUrl} src={previewUrl} alt={`Preview ${index + 1}`} className="photo-preview-image" />
+                          )
                         ))}
                       </div>
                       <div className="photo-preview-overlay">
@@ -1866,7 +1870,7 @@ export default function AdminPanel() {
                         <input
                           id="photo-file-replace"
                           type="file"
-                          accept="image/*"
+                          accept="image/*,video/mp4,video/webm,video/quicktime,video/x-msvideo"
                           multiple={!editingPhoto}
                           onChange={handlePhotoFileChange}
                           style={{ display: 'none' }}
@@ -1876,12 +1880,12 @@ export default function AdminPanel() {
                   ) : (
                     <label htmlFor="photo-file-input" className="photo-upload-placeholder">
                       <Camera size={36} className="upload-placeholder-icon" />
-                      <p className="upload-prompt">Click or drag & drop vintage photo here</p>
-                      <span className="upload-subprompt">Supports JPG, PNG, WEBP (Max 10MB)</span>
+                      <p className="upload-prompt">Click or drag & drop a photo or video here</p>
+                      <span className="upload-subprompt">Photos: JPG, PNG, WEBP (10MB). Videos: MP4, WEBM, MOV, AVI (100MB)</span>
                       <input
                         id="photo-file-input"
                         type="file"
-                        accept="image/*"
+                        accept="image/*,video/mp4,video/webm,video/quicktime,video/x-msvideo"
                         multiple={!editingPhoto}
                         onChange={handlePhotoFileChange}
                         style={{ display: 'none' }}

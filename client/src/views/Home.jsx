@@ -131,12 +131,11 @@ export default function Home() {
               {featuredPhotos.map((photo) => (
                 <Link to="/gallery" key={photo._id} className="glass-card gallery-photo-card">
                   <div className="photo-media-wrapper">
-                    <img 
-                      src={getImageUrl(photo.imageUrl || photo.imagePath)} 
-                      alt={photo.title}
-                      className="gallery-photo-img"
-                      loading="lazy"
-                    />
+                    {(photo.resourceType || 'image') === 'video' ? (
+                      <video src={getImageUrl(photo.imageUrl)} className="gallery-photo-img" muted preload="metadata" />
+                    ) : (
+                      <img src={getImageUrl(photo.imageUrl || photo.imagePath)} alt={photo.title} className="gallery-photo-img" loading="lazy" />
+                    )}
                   </div>
                 </Link>
               ))}

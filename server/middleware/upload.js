@@ -53,12 +53,22 @@ const fileFilter = (req, file, cb) => {
     } else {
       cb(new Error('Invalid file format. Only PDF files are allowed for books.'), false);
     }
-  } else if (file.fieldname === 'image' || file.fieldname === 'portrait' || file.fieldname === 'photo') {
+  } else if (file.fieldname === 'image' || file.fieldname === 'portrait') {
     const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
       cb(new Error('Invalid file format. Only JPEG, PNG, and WEBP images are allowed.'), false);
+    }
+  } else if (file.fieldname === 'photo') {
+    const allowedMimeTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/webp',
+      'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'
+    ];
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file format. Gallery uploads must be JPEG, PNG, WEBP, MP4, WEBM, MOV, or AVI files.'), false);
     }
   } else {
     cb(new Error(`Unexpected upload field: ${file.fieldname}`), false);
@@ -67,6 +77,7 @@ const fileFilter = (req, file, cb) => {
 
 const maxPdfSizeBytes = (parseInt(process.env.MAX_PDF_UPLOAD_MB) || 25) * 1024 * 1024;
 const maxImageSizeBytes = (parseInt(process.env.MAX_IMAGE_UPLOAD_MB) || 10) * 1024 * 1024;
+const maxVideoSizeBytes = (parseInt(process.env.MAX_VIDEO_UPLOAD_MB) || 100) * 1024 * 1024;
 
 export const upload = multer({
   storage,
@@ -81,7 +92,7 @@ export const uploadPhoto = multer({
   storage: multer.memoryStorage(),
   fileFilter,
   limits: {
-    fileSize: maxImageSizeBytes
+    fileSize: Math.max(maxImageSizeBytes, maxVideoSizeBytes)
   }
 });
 
@@ -117,11 +128,14 @@ export function checkUploadLimits(req, res, next) {
       });
     }
 
-    if ((file.fieldname === 'image' || file.fieldname === 'portrait' || file.fieldname === 'photo') && file.size > maxImageSizeBytes) {
+    const maxAllowedBytes = file.fieldname === 'photo' && file.mimetype.startsWith('video/')
+      ? maxVideoSizeBytes
+      : maxImageSizeBytes;
+    if ((file.fieldname === 'image' || file.fieldname === 'portrait' || file.fieldname === 'photo') && file.size > maxAllowedBytes) {
       if (file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
       return res.status(400).json({
         message: 'Validation error',
-        errors: [`Image upload size exceeds the maximum limit of ${process.env.MAX_IMAGE_UPLOAD_MB || 10}MB`]
+        errors: [`Upload size exceeds the maximum limit of ${file.mimetype.startsWith('video/') ? process.env.MAX_VIDEO_UPLOAD_MB || 100 : process.env.MAX_IMAGE_UPLOAD_MB || 10}MB`]
       });
     }
   }

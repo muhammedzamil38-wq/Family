@@ -21,6 +21,11 @@ const PhotoSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  resourceType: {
+    type: String,
+    enum: ['image', 'video'],
+    default: 'image'
+  },
   isVisible: {
     type: Boolean,
     default: true

@@ -19,17 +19,18 @@ function configureCloudinary() {
   configured = true;
 }
 
-export function uploadImage(buffer) {
+export function uploadMedia(buffer, resourceType = 'image') {
   configureCloudinary();
 
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream({
-      resource_type: 'image'
+      resource_type: resourceType
     }, (error, result) => {
       if (error) return reject(error);
       resolve({
         imageUrl: result.secure_url,
-        cloudinaryPublicId: result.public_id
+        cloudinaryPublicId: result.public_id,
+        resourceType
       });
     });
 
@@ -37,12 +38,20 @@ export function uploadImage(buffer) {
   });
 }
 
+export function uploadImage(buffer) {
+  return uploadMedia(buffer, 'image');
+}
+
 export function isCloudinaryError(error) {
   return Boolean(error?.http_code || error?.name === 'AuthorizationRequiredError');
 }
 
-export function deleteImage(publicId) {
+export function deleteMedia(publicId, resourceType = 'image') {
   if (!publicId) return Promise.resolve();
   configureCloudinary();
-  return cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+  return cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+}
+
+export function deleteImage(publicId) {
+  return deleteMedia(publicId, 'image');
 }

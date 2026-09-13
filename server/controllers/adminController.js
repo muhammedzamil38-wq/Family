@@ -7,7 +7,7 @@ import SiteContent from '../models/SiteContent.js';
 import AuditLog from '../models/AuditLog.js';
 import Photo from '../models/Photo.js';
 import { generatePdfCover } from '../services/pdfService.js';
-import { deleteImage, isCloudinaryError, uploadImage } from '../services/cloudinaryService.js';
+import { deleteImage, deleteMedia, isCloudinaryError, uploadImage, uploadMedia } from '../services/cloudinaryService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -942,13 +942,14 @@ export async function createPhoto(req, res) {
 
   let uploadedPublicId;
   try {
-    const uploadedImage = await uploadImage(req.file.buffer);
-    uploadedPublicId = uploadedImage.cloudinaryPublicId;
+    const resourceType = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
+    const uploadedMedia = await uploadMedia(req.file.buffer, resourceType);
+    uploadedPublicId = uploadedMedia.cloudinaryPublicId;
 
     const photo = new Photo({
       title: title && title.trim() ? title.trim() : 'Photograph',
       description: description ? description.trim() : '',
-      ...uploadedImage,
+      ...uploadedMedia,
       isVisible: isVisible === undefined ? true : (isVisible === 'true' || isVisible === true)
     });
 
@@ -963,13 +964,13 @@ export async function createPhoto(req, res) {
     );
 
     return res.status(201).json({
-      message: 'Photograph uploaded and added to the gallery successfully.',
+      message: `${resourceType === 'video' ? 'Video' : 'Photograph'} uploaded and added to the gallery successfully.`,
       photo
     });
   } catch (error) {
     console.error('Error creating photo record:', error);
     if (uploadedPublicId) {
-      try { await deleteImage(uploadedPublicId); } catch (cleanupError) {
+      try { await deleteMedia(uploadedPublicId, req.file?.mimetype.startsWith('video/') ? 'video' : 'image'); } catch (cleanupError) {
         console.warn('Could not clean up Cloudinary photo:', cleanupError.message);
       }
     }
@@ -1014,14 +1015,17 @@ export async function updatePhoto(req, res) {
     // Handle new photo image upload replacement
     if (req.file) {
       const oldPublicId = photo.cloudinaryPublicId;
-      const uploadedImage = await uploadImage(req.file.buffer);
-      replacementPublicId = uploadedImage.cloudinaryPublicId;
-      photo.imageUrl = uploadedImage.imageUrl;
-      photo.cloudinaryPublicId = uploadedImage.cloudinaryPublicId;
+      const oldResourceType = photo.resourceType;
+      const resourceType = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
+      const uploadedMedia = await uploadMedia(req.file.buffer, resourceType);
+      replacementPublicId = uploadedMedia.cloudinaryPublicId;
+      photo.imageUrl = uploadedMedia.imageUrl;
+      photo.cloudinaryPublicId = uploadedMedia.cloudinaryPublicId;
+      photo.resourceType = resourceType;
       await photo.save();
 
       try {
-        await deleteImage(oldPublicId);
+        await deleteMedia(oldPublicId, oldResourceType);
       } catch (cleanupError) {
         console.warn('Could not remove old Cloudinary photo:', cleanupError.message);
       }
@@ -1044,7 +1048,7 @@ export async function updatePhoto(req, res) {
   } catch (error) {
     console.error('Error updating photo record:', error);
     if (replacementPublicId) {
-      try { await deleteImage(replacementPublicId); } catch (cleanupError) {
+      try { await deleteMedia(replacementPublicId, req.file?.mimetype.startsWith('video/') ? 'video' : 'image'); } catch (cleanupError) {
         console.warn('Could not clean up replacement Cloudinary photo:', cleanupError.message);
       }
     }
@@ -1110,7 +1114,7 @@ export async function deletePhoto(req, res) {
     }
 
     try {
-      await deleteImage(photo.cloudinaryPublicId);
+      await deleteMedia(photo.cloudinaryPublicId, photo.resourceType);
     } catch (cleanupError) {
       console.warn('Could not delete Cloudinary photo:', cleanupError.message);
     }
