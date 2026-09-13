@@ -10,20 +10,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
- * Retrieves public site-wide content: Hero layout, qualities grid, and About Us text.
+ * Retrieves public site-wide content: Hero layout, qualities grid, About Us text, and contact details.
  * GET /api/v1/public/site-content
  */
 export async function getSiteContent(req, res) {
   try {
     const contents = await SiteContent.find({
-      key: { $in: ['hero', 'qualities', 'about', 'settings'] }
+      key: { $in: ['hero', 'qualities', 'about', 'contact', 'settings'] }
     });
 
     // Reduce records into a clean nested JSON object
     const result = contents.reduce((acc, curr) => {
       acc[curr.key] = curr.value;
       return acc;
-    }, { hero: null, qualities: [], about: null, settings: null });
+    }, { hero: null, qualities: [], about: null, contact: null, settings: null });
 
     // Filter visible qualities and sort by displayOrder
     if (result.qualities && Array.isArray(result.qualities)) {

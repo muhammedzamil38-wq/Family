@@ -14,6 +14,7 @@ import Family from './views/Family';
 import AdminLogin from './views/AdminLogin';
 import AdminPanel from './views/AdminPanel';
 import Gallery from './views/Gallery';
+import Contact from './views/Contact';
 
 // Public Layout Wrapper Component
 function PublicLayout({ children }) {
@@ -64,6 +65,15 @@ export default function App() {
                   <Family />
                 </PublicLayout>
               } 
+            />
+
+            <Route
+              path="/contact"
+              element={
+                <PublicLayout>
+                  <Contact />
+                </PublicLayout>
+              }
             />
 
             {/* Admin Management System Routes */}

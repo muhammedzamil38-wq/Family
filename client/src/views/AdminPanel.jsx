@@ -88,8 +88,6 @@ export default function AdminPanel() {
   // Hero Fields
   const [heroTitle, setHeroTitle] = useState('');
   const [heroSubtitle, setHeroSubtitle] = useState('');
-  const [heroCtaLabel, setHeroCtaLabel] = useState('');
-  const [heroCtaDestination, setHeroCtaDestination] = useState('/gallery');
   const [heroAltText, setHeroAltText] = useState('');
   const [heroImageFile, setHeroImageFile] = useState(null);
   // About Narrative Fields
@@ -97,6 +95,7 @@ export default function AdminPanel() {
   const [originalAboutText, setOriginalAboutText] = useState(''); // Tracking changes
   // Qualities list is edited inline
   const [qualities, setQualities] = useState([]);
+  const [contactContent, setContactContent] = useState({ intro: '', email: '', phone: '', location: '' });
 
   // Redirect if unauthenticated
   useEffect(() => {
@@ -139,7 +138,7 @@ export default function AdminPanel() {
       }
 
       // 4. Site Content keys
-      const siteKeys = ['hero', 'qualities', 'about'];
+      const siteKeys = ['hero', 'qualities', 'about', 'contact'];
       const fetchedContent = {};
       for (const key of siteKeys) {
         const res = await fetch(`${API_BASE_URL}/api/v1/admin/site-content/${key}`, { credentials: 'include' });
@@ -154,9 +153,10 @@ export default function AdminPanel() {
       if (fetchedContent.hero) {
         setHeroTitle(fetchedContent.hero.title || '');
         setHeroSubtitle(fetchedContent.hero.subtitle || '');
-        setHeroCtaLabel(fetchedContent.hero.ctaLabel || '');
-        setHeroCtaDestination(fetchedContent.hero.ctaDestination || '/gallery');
         setHeroAltText(fetchedContent.hero.altText || '');
+      }
+      if (fetchedContent.contact) {
+        setContactContent({ intro: '', email: '', phone: '', location: '', ...fetchedContent.contact });
       }
       if (fetchedContent.about) {
         setAboutText(fetchedContent.about.text || '');
@@ -455,8 +455,6 @@ export default function AdminPanel() {
     const heroData = {
       title: heroTitle,
       subtitle: heroSubtitle,
-      ctaLabel: heroCtaLabel,
-      ctaDestination: heroCtaDestination,
       altText: heroAltText
     };
     formData.append('value', JSON.stringify(heroData));
@@ -523,6 +521,34 @@ export default function AdminPanel() {
       }
     }
     setAboutText(originalAboutText);
+  };
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setCmsErrors([]);
+    setActionLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/site-content/contact`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: contactContent }),
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        showSuccess('Contact details updated!');
+        refreshData();
+      } else {
+        const data = await response.json();
+        setCmsErrors(data.errors || [data.message]);
+      }
+    } catch (err) {
+      console.error(err);
+      setCmsErrors(['Network error saving contact details.']);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   // Qualities management
@@ -1093,6 +1119,12 @@ export default function AdminPanel() {
                   >
                     About Narrative
                   </button>
+                  <button
+                    onClick={() => setContentSubTab('contact')}
+                    className={`sub-tab-btn ${contentSubTab === 'contact' ? 'active' : ''}`}
+                  >
+                    Contact Details
+                  </button>
                 </div>
 
                 {/* Content sub-tab panels */}
@@ -1123,28 +1155,6 @@ export default function AdminPanel() {
                             className="glass-input" 
                             value={heroSubtitle} 
                             onChange={(e) => setHeroSubtitle(e.target.value)} 
-                          />
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="hero-cta-label-input">CTA Button Label</label>
-                          <input 
-                            id="hero-cta-label-input"
-                            type="text" 
-                            className="glass-input" 
-                            value={heroCtaLabel} 
-                            onChange={(e) => setHeroCtaLabel(e.target.value)} 
-                          />
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="hero-cta-dest-input">CTA Destination Link</label>
-                          <input 
-                            id="hero-cta-dest-input"
-                            type="text" 
-                            className="glass-input" 
-                            value={heroCtaDestination} 
-                            onChange={(e) => setHeroCtaDestination(e.target.value)} 
                           />
                         </div>
 
@@ -1310,6 +1320,42 @@ export default function AdminPanel() {
                         </button>
                         <button type="button" onClick={handleAboutCancel} className="btn btn-secondary">
                           Cancel / Reset
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {contentSubTab === 'contact' && (
+                    <form onSubmit={handleContactSubmit} className="glass-card content-form">
+                      <h3>Contact Details</h3>
+                      <p className="card-subtitle">These details appear on the public Contact page.</p>
+                      <div className="form-grid">
+                        <div className="form-group col-span-2">
+                          <label className="form-label" htmlFor="contact-intro-input">Introductory Text</label>
+                          <textarea
+                            id="contact-intro-input"
+                            className="glass-input"
+                            value={contactContent.intro}
+                            onChange={(e) => setContactContent({ ...contactContent, intro: e.target.value })}
+                            rows={3}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" htmlFor="contact-email-input">Email</label>
+                          <input id="contact-email-input" type="email" className="glass-input" value={contactContent.email} onChange={(e) => setContactContent({ ...contactContent, email: e.target.value })} />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" htmlFor="contact-phone-input">Phone Number</label>
+                          <input id="contact-phone-input" type="tel" className="glass-input" value={contactContent.phone} onChange={(e) => setContactContent({ ...contactContent, phone: e.target.value })} />
+                        </div>
+                        <div className="form-group col-span-2">
+                          <label className="form-label" htmlFor="contact-location-input">Location</label>
+                          <input id="contact-location-input" type="text" className="glass-input" value={contactContent.location} onChange={(e) => setContactContent({ ...contactContent, location: e.target.value })} />
+                        </div>
+                      </div>
+                      <div className="form-actions mt-4">
+                        <button type="submit" className="btn btn-primary" disabled={actionLoading}>
+                          <Save size={16} /> Save Contact Details
                         </button>
                       </div>
                     </form>

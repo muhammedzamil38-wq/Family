@@ -42,16 +42,9 @@ export default function Header() {
           <Link to="/family" className={`nav-link ${location.pathname === '/family' ? 'active' : ''}`}>
             Family Tree
           </Link>
-          <a
-            href="#about"
-            onClick={(e) => {
-              e.preventDefault();
-              handleScrollToSection('about');
-            }}
-            className="nav-link"
-          >
-            About Us
-          </a>
+          <Link to="/contact" className={`nav-link ${location.pathname === '/contact' ? 'active' : ''}`}>
+            Contact
+          </Link>
         </nav>
 
         <div className="header-actions">

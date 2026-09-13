@@ -814,9 +814,7 @@ export async function updateAdminSiteContent(req, res) {
         cloudinaryPublicId: heroData.cloudinaryPublicId || '',
         altText: heroData.altText || '',
         title: heroData.title || '',
-        subtitle: heroData.subtitle || '',
-        ctaLabel: heroData.ctaLabel || '',
-        ctaDestination: heroData.ctaDestination || '/gallery'
+        subtitle: heroData.subtitle || ''
       };
     } else if (key === 'qualities') {
       // Expects an array of quality cards

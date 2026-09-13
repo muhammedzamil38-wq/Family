@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -13,7 +14,7 @@ export default function Footer() {
         <div className="footer-links">
           <a href="#privacy" className="footer-link">Privacy Policy</a>
           <span className="divider">•</span>
-          <a href="#contact" className="footer-link">Contact Admin</a>
+          <Link to="/contact" className="footer-link">Contact</Link>
         </div>
       </div>
     </footer>

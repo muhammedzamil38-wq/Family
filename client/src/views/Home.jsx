@@ -10,8 +10,6 @@ export default function Home() {
       altText: 'Family Heritage',
       title: 'Our Family Archive',
       subtitle: 'Preserving our history, photographs, and family connections.',
-      ctaLabel: 'Explore Gallery',
-      ctaDestination: '/gallery'
     },
     qualities: [],
     about: {
@@ -93,9 +91,6 @@ export default function Home() {
           <div className="hero-content glass-card">
             <h1 className="hero-title">{hero?.title || 'Our Family Archive'}</h1>
             <p className="hero-subtitle">{hero?.subtitle || 'Preserving our history and photographs across generations.'}</p>
-            <Link to={hero?.ctaDestination || '/gallery'} className="btn btn-primary hero-cta">
-              {hero?.ctaLabel || 'Explore Gallery'} <ArrowRight size={18} />
-            </Link>
           </div>
         </div>
       </section>
@@ -173,7 +168,7 @@ export default function Home() {
         {/* 5. About Us Narrative Section */}
         {about && about.text && (
           <section className="about-section" id="about">
-            <h2 className="section-title">About Our Archive</h2>
+            <h2 className="section-title">About Our Family</h2>
             <div className="glass-card about-card">
               <p className="about-text-content">
                 {about.text}
