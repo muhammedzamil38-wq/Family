@@ -595,7 +595,7 @@ export default function AdminPanel() {
     setEditingPhoto(photo);
     setCmsErrors([]);
     if (photo) {
-      setPhotoPreviewUrls([`${API_BASE_URL}/${photo.imagePath}`]);
+      setPhotoPreviewUrls([getImageUrl(photo.imageUrl || photo.imagePath)]);
     } else {
       setPhotoPreviewUrls([]);
     }
@@ -1338,7 +1338,7 @@ export default function AdminPanel() {
                       <div key={photo._id} className="admin-photo-card glass-card">
                         <div className="admin-photo-thumb-wrapper">
                           <img
-                            src={getImageUrl(photo.imagePath)}
+                            src={getImageUrl(photo.imageUrl || photo.imagePath)}
                             alt="Family photograph"
                             className="admin-photo-thumb"
                           />

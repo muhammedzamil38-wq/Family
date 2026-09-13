@@ -7,6 +7,7 @@ import SiteContent from '../models/SiteContent.js';
 import AuditLog from '../models/AuditLog.js';
 import Photo from '../models/Photo.js';
 import { generatePdfCover } from '../services/pdfService.js';
+import { deleteImage, uploadImage } from '../services/cloudinaryService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -921,9 +922,10 @@ export async function createPhoto(req, res) {
     });
   }
 
+  let uploadedPublicId;
   try {
-    // Relative image path for client serving
-    const relativeImagePath = `uploads/photos/${path.basename(req.file.path)}`;
+    const uploadedImage = await uploadImage(req.file.buffer);
+    uploadedPublicId = uploadedImage.cloudinaryPublicId;
 
     // Parse array fields (either passed as JSON strings or comma-separated strings)
     let parsedPeople = [];
@@ -955,7 +957,7 @@ export async function createPhoto(req, res) {
     const photo = new Photo({
       title: title && title.trim() ? title.trim() : 'Photograph',
       description: description ? description.trim() : '',
-      imagePath: relativeImagePath,
+      ...uploadedImage,
       year: year ? year.trim() : '',
       decade: decade ? decade.trim() : 'Unspecified',
       location: location ? location.trim() : '',
@@ -982,7 +984,11 @@ export async function createPhoto(req, res) {
     });
   } catch (error) {
     console.error('Error creating photo record:', error);
-    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    if (uploadedPublicId) {
+      try { await deleteImage(uploadedPublicId); } catch (cleanupError) {
+        console.warn('Could not clean up Cloudinary photo:', cleanupError.message);
+      }
+    }
     return res.status(500).json({
       message: 'Internal server error',
       errors: [error.message]
@@ -1009,10 +1015,10 @@ export async function updatePhoto(req, res) {
     isVisible
   } = req.body;
 
+  let replacementPublicId;
   try {
     const photo = await Photo.findById(id);
     if (!photo) {
-      if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(404).json({
         message: 'Photo not found',
         errors: [`No photograph found with ID: ${id}`]
@@ -1054,19 +1060,21 @@ export async function updatePhoto(req, res) {
 
     // Handle new photo image upload replacement
     if (req.file) {
-      const serverRoot = path.resolve(__dirname, '..');
-      const oldAbsolutePath = path.join(serverRoot, photo.imagePath);
-      if (fs.existsSync(oldAbsolutePath)) {
-        try {
-          fs.unlinkSync(oldAbsolutePath);
-        } catch (e) {
-          console.warn('Could not remove old photo file:', e.message);
-        }
-      }
-      photo.imagePath = `uploads/photos/${path.basename(req.file.path)}`;
-    }
+      const oldPublicId = photo.cloudinaryPublicId;
+      const uploadedImage = await uploadImage(req.file.buffer);
+      replacementPublicId = uploadedImage.cloudinaryPublicId;
+      photo.imageUrl = uploadedImage.imageUrl;
+      photo.cloudinaryPublicId = uploadedImage.cloudinaryPublicId;
+      await photo.save();
 
-    await photo.save();
+      try {
+        await deleteImage(oldPublicId);
+      } catch (cleanupError) {
+        console.warn('Could not remove old Cloudinary photo:', cleanupError.message);
+      }
+    } else {
+      await photo.save();
+    }
 
     await logAdminAction(
       req.session.user.id,
@@ -1082,7 +1090,11 @@ export async function updatePhoto(req, res) {
     });
   } catch (error) {
     console.error('Error updating photo record:', error);
-    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    if (replacementPublicId) {
+      try { await deleteImage(replacementPublicId); } catch (cleanupError) {
+        console.warn('Could not clean up replacement Cloudinary photo:', cleanupError.message);
+      }
+    }
     return res.status(500).json({
       message: 'Internal server error',
       errors: [error.message]
@@ -1139,15 +1151,10 @@ export async function deletePhoto(req, res) {
       });
     }
 
-    // Unlink image file from disk
-    const serverRoot = path.resolve(__dirname, '..');
-    const absoluteImagePath = path.join(serverRoot, photo.imagePath);
-    if (fs.existsSync(absoluteImagePath)) {
-      try {
-        fs.unlinkSync(absoluteImagePath);
-      } catch (e) {
-        console.warn('Could not delete photo image file:', e.message);
-      }
+    try {
+      await deleteImage(photo.cloudinaryPublicId);
+    } catch (cleanupError) {
+      console.warn('Could not delete Cloudinary photo:', cleanupError.message);
     }
 
     await Photo.findByIdAndDelete(id);

@@ -9,7 +9,7 @@ import SiteContent from '../models/SiteContent.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../env/backend.env') });
+dotenv.config({ path: path.resolve(__dirname, '../backend.env') });
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/family_library';
 const INITIAL_ADMIN_EMAIL = process.env.INITIAL_ADMIN_EMAIL || 'admin@family.local';

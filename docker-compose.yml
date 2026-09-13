@@ -20,7 +20,7 @@ services:
     container_name: family_server
     restart: always
     env_file:
-      - ./server/env/backend.env
+      - ./server/backend.env
     environment:
       - MONGODB_URI=mongodb://mongo:27017/family_library
       - UPLOAD_DIR=/app/uploads

@@ -40,13 +40,13 @@ import {
 
 // Import Middleware
 import { requireAdmin } from './middleware/auth.js';
-import { upload, checkUploadLimits } from './middleware/upload.js';
+import { upload, uploadPhoto, checkUploadLimits } from './middleware/upload.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Explicitly load server-owned configuration.
-dotenv.config({ path: path.resolve(__dirname, 'env/backend.env') });
+dotenv.config({ path: path.resolve(__dirname, 'backend.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -201,8 +201,8 @@ app.delete('/api/v1/admin/family-members/:id', requireAdmin, deleteFamilyMember)
 
 // Photo Gallery Management
 app.get('/api/v1/admin/photos', requireAdmin, getAllPhotos);
-app.post('/api/v1/admin/photos', requireAdmin, upload.single('photo'), checkUploadLimits, createPhoto);
-app.patch('/api/v1/admin/photos/:id', requireAdmin, upload.single('photo'), checkUploadLimits, updatePhoto);
+app.post('/api/v1/admin/photos', requireAdmin, uploadPhoto.single('photo'), checkUploadLimits, createPhoto);
+app.patch('/api/v1/admin/photos/:id', requireAdmin, uploadPhoto.single('photo'), checkUploadLimits, updatePhoto);
 app.patch('/api/v1/admin/photos/:id/visibility', requireAdmin, updatePhotoVisibility);
 app.delete('/api/v1/admin/photos/:id', requireAdmin, deletePhoto);
 

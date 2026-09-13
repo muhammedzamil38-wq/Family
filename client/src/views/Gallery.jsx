@@ -114,7 +114,7 @@ export default function Gallery() {
                 >
                   <div className="gallery-image-wrapper">
                     <img
-                      src={getImageUrl(photo.imagePath)}
+                      src={getImageUrl(photo.imageUrl || photo.imagePath)}
                       alt={photo.title}
                       className="gallery-image"
                       loading="lazy"
@@ -156,7 +156,7 @@ export default function Gallery() {
                 </button>
 
                 <a
-                  href={getImageUrl(activePhoto.imagePath)}
+                  href={getImageUrl(activePhoto.imageUrl || activePhoto.imagePath)}
                   target="_blank"
                   rel="noreferrer"
                   download
@@ -195,7 +195,7 @@ export default function Gallery() {
               {/* Photo View Container */}
               <div className={`lightbox-image-container ${isZoomed ? 'zoomed' : ''}`}>
                 <img
-                  src={getImageUrl(activePhoto.imagePath)}
+                  src={getImageUrl(activePhoto.imageUrl || activePhoto.imagePath)}
                   alt={activePhoto.title}
                   className="lightbox-image"
                 />

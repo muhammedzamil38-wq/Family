@@ -8,7 +8,7 @@ import User from '../models/User.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../env/backend.env') });
+dotenv.config({ path: path.resolve(__dirname, '../backend.env') });
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/family_library';
 const newAdminEmail = (process.env.INITIAL_ADMIN_EMAIL || '').toLowerCase();
@@ -16,7 +16,7 @@ const newAdminPassword = process.env.INITIAL_ADMIN_PASSWORD || '';
 
 async function updateAdmin() {
   if (!newAdminEmail || !newAdminPassword) {
-    console.error('Admin credentials missing in server/env/backend.env');
+    console.error('Admin credentials missing in server/backend.env');
     process.exit(1);
   }
 

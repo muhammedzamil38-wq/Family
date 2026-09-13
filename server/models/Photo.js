@@ -11,9 +11,15 @@ const PhotoSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
-  imagePath: {
+  imageUrl: {
     type: String,
-    required: true
+    required: true,
+    trim: true
+  },
+  cloudinaryPublicId: {
+    type: String,
+    required: true,
+    trim: true
   },
   year: {
     type: String,

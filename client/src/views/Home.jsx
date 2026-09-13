@@ -131,7 +131,7 @@ export default function Home() {
                 <Link to="/gallery" key={photo._id} className="glass-card gallery-photo-card">
                   <div className="photo-media-wrapper">
                     <img 
-                      src={getImageUrl(photo.imagePath)} 
+                      src={getImageUrl(photo.imageUrl || photo.imagePath)} 
                       alt={photo.title}
                       className="gallery-photo-img"
                       loading="lazy"

@@ -76,6 +76,15 @@ export const upload = multer({
   }
 });
 
+// Gallery photos are sent to Cloudinary and do not need a local disk copy.
+export const uploadPhoto = multer({
+  storage: multer.memoryStorage(),
+  fileFilter,
+  limits: {
+    fileSize: maxImageSizeBytes
+  }
+});
+
 /**
  * Middleware to enforce strict, granular file size limits.
  * Deletes uploaded file from disk if it violates size guidelines.
@@ -85,7 +94,7 @@ export function checkUploadLimits(req, res, next) {
     const file = req.file;
 
     if (file.fieldname === 'pdf' && file.size > maxPdfSizeBytes) {
-      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      if (file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
       return res.status(400).json({
         message: 'Validation error',
         errors: [`PDF upload size exceeds the maximum limit of ${process.env.MAX_PDF_UPLOAD_MB || 25}MB`]
@@ -93,7 +102,7 @@ export function checkUploadLimits(req, res, next) {
     }
 
     if ((file.fieldname === 'image' || file.fieldname === 'portrait' || file.fieldname === 'photo') && file.size > maxImageSizeBytes) {
-      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      if (file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
       return res.status(400).json({
         message: 'Validation error',
         errors: [`Image upload size exceeds the maximum limit of ${process.env.MAX_IMAGE_UPLOAD_MB || 10}MB`]
