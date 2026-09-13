@@ -54,7 +54,7 @@ export async function getDashboardStats(req, res) {
     const photoCount = await Photo.countDocuments();
     
     const hero = await SiteContent.findOne({ key: 'hero' });
-    const heroImageStatus = !!(hero && hero.value && hero.value.imagePath);
+    const heroImageStatus = !!(hero && hero.value && (hero.value.imageUrl || hero.value.imagePath));
 
     // Retrieve last update dates from all major schemas
     const lastBook = await Book.findOne().sort({ updatedAt: -1 }).select('updatedAt');
@@ -775,6 +775,8 @@ export async function getAdminSiteContent(req, res) {
  */
 export async function updateAdminSiteContent(req, res) {
   const { key } = req.params;
+  let uploadedHeroPublicId;
+  let previousHeroPublicId;
 
   try {
     let record = await SiteContent.findOne({ key });
@@ -795,35 +797,21 @@ export async function updateAdminSiteContent(req, res) {
     if (key === 'hero') {
       // Validate hero structure
       const heroData = newValue || {};
-      
-      // If a file is uploaded, replace the old hero image path
+
       if (req.file) {
-        const serverRoot = path.resolve(__dirname, '..');
-        const oldImagePath = record.value && record.value.imagePath 
-          ? path.join(serverRoot, record.value.imagePath) 
-          : null;
-        
-        if (oldImagePath && fs.existsSync(oldImagePath)) {
-          try { fs.unlinkSync(oldImagePath); } catch (e) {}
-        }
-        
-        heroData.imagePath = `uploads/images/${path.basename(req.file.path)}`;
-      } else if (heroData.imagePath) {
-        // If imagePath was passed in payload, ensure it's normalized to relative
-        const base = path.basename(heroData.imagePath);
-        heroData.imagePath = heroData.imagePath.includes('uploads/images/') 
-          ? `uploads/images/${base}` 
-          : heroData.imagePath;
-      } else if (record.value && record.value.imagePath) {
-        // Keep the old hero image if no new one was uploaded
-        const base = path.basename(record.value.imagePath);
-        heroData.imagePath = record.value.imagePath.includes('uploads/images/') 
-          ? `uploads/images/${base}` 
-          : record.value.imagePath;
+        const uploadedImage = await uploadImage(req.file.buffer);
+        uploadedHeroPublicId = uploadedImage.cloudinaryPublicId;
+        previousHeroPublicId = record.value && record.value.cloudinaryPublicId;
+        heroData.imageUrl = uploadedImage.imageUrl;
+        heroData.cloudinaryPublicId = uploadedImage.cloudinaryPublicId;
+      } else if (record.value) {
+        heroData.imageUrl = heroData.imageUrl || record.value.imageUrl || record.value.imagePath || '';
+        heroData.cloudinaryPublicId = heroData.cloudinaryPublicId || record.value.cloudinaryPublicId || '';
       }
-      
+
       record.value = {
-        imagePath: heroData.imagePath || '',
+        imageUrl: heroData.imageUrl || '',
+        cloudinaryPublicId: heroData.cloudinaryPublicId || '',
         altText: heroData.altText || '',
         title: heroData.title || '',
         subtitle: heroData.subtitle || '',
@@ -833,7 +821,7 @@ export async function updateAdminSiteContent(req, res) {
     } else if (key === 'qualities') {
       // Expects an array of quality cards
       if (!Array.isArray(newValue)) {
-        if (req.file) fs.unlinkSync(req.file.path);
+        if (req.file?.path) fs.unlinkSync(req.file.path);
         return res.status(400).json({
           message: 'Validation error',
           errors: ['Qualities content must be an array.']
@@ -854,6 +842,14 @@ export async function updateAdminSiteContent(req, res) {
     record.updatedBy = req.session.user.id;
     await record.save();
 
+    if (previousHeroPublicId) {
+      try {
+        await deleteImage(previousHeroPublicId);
+      } catch (cleanupError) {
+        console.warn('Could not remove old Cloudinary hero image:', cleanupError.message);
+      }
+    }
+
     await logAdminAction(
       req.session.user.id,
       'UPDATE_CONTENT',
@@ -868,10 +864,19 @@ export async function updateAdminSiteContent(req, res) {
     });
   } catch (error) {
     console.error('Error updating site content:', error);
-    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    return res.status(500).json({
-      message: 'Internal server error',
-      errors: [error.message]
+    if (uploadedHeroPublicId) {
+      try { await deleteImage(uploadedHeroPublicId); } catch (cleanupError) {
+        console.warn('Could not clean up Cloudinary hero image:', cleanupError.message);
+      }
+    }
+    const statusCode = isCloudinaryError(error) ? 502 : 500;
+    return res.status(statusCode).json({
+      message: statusCode === 502
+        ? 'Image storage provider rejected the upload.'
+        : 'Internal server error',
+      errors: statusCode === 502
+        ? [`Cloudinary rejected the upload (${error.http_code || 'unknown'}). Check the Vercel Cloudinary environment variables.`]
+        : (process.env.NODE_ENV === 'development' ? [error.message] : [])
     });
   }
 }

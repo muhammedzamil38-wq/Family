@@ -40,7 +40,7 @@ import {
 
 // Import Middleware
 import { requireAdmin } from './middleware/auth.js';
-import { upload, uploadPhoto, checkUploadLimits } from './middleware/upload.js';
+import { upload, uploadPhoto, uploadHero, checkUploadLimits } from './middleware/upload.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -208,7 +208,7 @@ app.delete('/api/v1/admin/photos/:id', requireAdmin, deletePhoto);
 
 // Site Content Customizations
 app.get('/api/v1/admin/site-content/:key', requireAdmin, getAdminSiteContent);
-app.patch('/api/v1/admin/site-content/:key', requireAdmin, upload.single('image'), checkUploadLimits, updateAdminSiteContent);
+app.patch('/api/v1/admin/site-content/:key', requireAdmin, uploadHero.single('image'), checkUploadLimits, updateAdminSiteContent);
 
 // --- Global Error Handler (Hides server stacktraces from client) ---
 app.use((err, req, res, next) => {

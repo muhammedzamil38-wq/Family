@@ -73,7 +73,7 @@ export default function Home() {
     return `${API_BASE_URL}/${cleanPath}`;
   };
 
-  const heroImageSrc = getImageUrl(hero?.imagePath);
+  const heroImageSrc = getImageUrl(hero?.imageUrl || hero?.imagePath);
 
   return (
     <div className="home-view">
