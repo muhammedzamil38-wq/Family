@@ -396,29 +396,33 @@ select.glass-input {
 }
 
 .hero-section {
-  min-height: 600px;
+  min-height: 520px;
   background-color: #5c554e;
   position: relative;
   margin-bottom: 60px;
-  display: flex;
-  align-items: center;
   overflow: hidden;
 }
 
 .hero-image {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  z-index: 0;
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  background: #5c554e;
+  height: auto;
 }
 
+.hero-section:has(.hero-image) {
+  min-height: 0;
+}
+
+.hero-section:not(:has(.hero-image)) {
+  min-height: 520px;
+}
+
+/* Keep the text layer over the naturally sized image. */
 .hero-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   background: linear-gradient(to right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
