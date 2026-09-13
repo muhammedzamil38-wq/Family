@@ -994,7 +994,9 @@ export async function createPhoto(req, res) {
       message: statusCode === 502
         ? 'Image storage provider rejected the upload.'
         : 'Internal server error',
-      errors: process.env.NODE_ENV === 'development' ? [error.message] : []
+      errors: statusCode === 502
+        ? [`Cloudinary rejected the upload (${error.http_code || 'unknown'}). Check the Vercel Cloudinary environment variables.`]
+        : (process.env.NODE_ENV === 'development' ? [error.message] : [])
     });
   }
 }
@@ -1103,7 +1105,9 @@ export async function updatePhoto(req, res) {
       message: statusCode === 502
         ? 'Image storage provider rejected the upload.'
         : 'Internal server error',
-      errors: process.env.NODE_ENV === 'development' ? [error.message] : []
+      errors: statusCode === 502
+        ? [`Cloudinary rejected the upload (${error.http_code || 'unknown'}). Check the Vercel Cloudinary environment variables.`]
+        : (process.env.NODE_ENV === 'development' ? [error.message] : [])
     });
   }
 }
