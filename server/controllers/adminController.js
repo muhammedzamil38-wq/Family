@@ -886,7 +886,7 @@ export async function updateAdminSiteContent(req, res) {
  */
 export async function getAllPhotos(req, res) {
   try {
-    const photos = await Photo.find().sort({ displayOrder: 1, createdAt: -1 });
+    const photos = await Photo.find().sort({ createdAt: -1 });
     return res.json(photos);
   } catch (error) {
     console.error('Error fetching admin photos:', error);
@@ -905,13 +905,6 @@ export async function createPhoto(req, res) {
   const {
     title,
     description,
-    year,
-    decade,
-    location,
-    peopleInPhoto,
-    tags,
-    displayOrder,
-    isFeatured,
     isVisible
   } = req.body;
 
@@ -927,44 +920,10 @@ export async function createPhoto(req, res) {
     const uploadedImage = await uploadImage(req.file.buffer);
     uploadedPublicId = uploadedImage.cloudinaryPublicId;
 
-    // Parse array fields (either passed as JSON strings or comma-separated strings)
-    let parsedPeople = [];
-    if (peopleInPhoto) {
-      if (Array.isArray(peopleInPhoto)) {
-        parsedPeople = peopleInPhoto;
-      } else {
-        try {
-          parsedPeople = JSON.parse(peopleInPhoto);
-        } catch {
-          parsedPeople = peopleInPhoto.split(',').map(s => s.trim()).filter(Boolean);
-        }
-      }
-    }
-
-    let parsedTags = [];
-    if (tags) {
-      if (Array.isArray(tags)) {
-        parsedTags = tags;
-      } else {
-        try {
-          parsedTags = JSON.parse(tags);
-        } catch {
-          parsedTags = tags.split(',').map(s => s.trim()).filter(Boolean);
-        }
-      }
-    }
-
     const photo = new Photo({
       title: title && title.trim() ? title.trim() : 'Photograph',
       description: description ? description.trim() : '',
       ...uploadedImage,
-      year: year ? year.trim() : '',
-      decade: decade ? decade.trim() : 'Unspecified',
-      location: location ? location.trim() : '',
-      peopleInPhoto: parsedPeople,
-      tags: parsedTags,
-      displayOrder: displayOrder ? parseInt(displayOrder, 10) : 0,
-      isFeatured: isFeatured === 'true' || isFeatured === true,
       isVisible: isVisible === undefined ? true : (isVisible === 'true' || isVisible === true)
     });
 
@@ -975,7 +934,7 @@ export async function createPhoto(req, res) {
       'CREATE_PHOTO',
       'Photo',
       photo._id,
-      { title: photo.title, year: photo.year }
+      { title: photo.title }
     );
 
     return res.status(201).json({
@@ -1010,13 +969,6 @@ export async function updatePhoto(req, res) {
   const {
     title,
     description,
-    year,
-    decade,
-    location,
-    peopleInPhoto,
-    tags,
-    displayOrder,
-    isFeatured,
     isVisible
   } = req.body;
 
@@ -1032,36 +984,7 @@ export async function updatePhoto(req, res) {
 
     if (title && title.trim()) photo.title = title.trim();
     if (description !== undefined) photo.description = description ? description.trim() : '';
-    if (year !== undefined) photo.year = year ? year.trim() : '';
-    if (decade !== undefined) photo.decade = decade ? decade.trim() : 'Unspecified';
-    if (location !== undefined) photo.location = location ? location.trim() : '';
-    if (displayOrder !== undefined) photo.displayOrder = parseInt(displayOrder, 10) || 0;
-    if (isFeatured !== undefined) photo.isFeatured = isFeatured === 'true' || isFeatured === true;
     if (isVisible !== undefined) photo.isVisible = isVisible === 'true' || isVisible === true;
-
-    if (peopleInPhoto !== undefined) {
-      if (Array.isArray(peopleInPhoto)) {
-        photo.peopleInPhoto = peopleInPhoto;
-      } else {
-        try {
-          photo.peopleInPhoto = JSON.parse(peopleInPhoto);
-        } catch {
-          photo.peopleInPhoto = peopleInPhoto.split(',').map(s => s.trim()).filter(Boolean);
-        }
-      }
-    }
-
-    if (tags !== undefined) {
-      if (Array.isArray(tags)) {
-        photo.tags = tags;
-      } else {
-        try {
-          photo.tags = JSON.parse(tags);
-        } catch {
-          photo.tags = tags.split(',').map(s => s.trim()).filter(Boolean);
-        }
-      }
-    }
 
     // Handle new photo image upload replacement
     if (req.file) {

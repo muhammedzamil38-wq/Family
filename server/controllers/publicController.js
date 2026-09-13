@@ -161,37 +161,15 @@ export async function getVisibleFamily(req, res) {
 }
 
 /**
- * Retrieves visible vintage photos with optional filtering by decade, tag, search query.
+ * Retrieves visible gallery photos.
  * GET /api/v1/public/photos
  */
 export async function getPublicPhotos(req, res) {
-  const { decade, tag, search } = req.query;
-
   try {
     const filter = { isVisible: true };
 
-    if (decade && decade !== 'All') {
-      filter.decade = decade;
-    }
-
-    if (tag) {
-      filter.tags = tag;
-    }
-
-    if (search && search.trim()) {
-      const searchRegex = new RegExp(search.trim(), 'i');
-      filter.$or = [
-        { title: searchRegex },
-        { description: searchRegex },
-        { location: searchRegex },
-        { year: searchRegex },
-        { peopleInPhoto: searchRegex },
-        { tags: searchRegex }
-      ];
-    }
-
     const photos = await Photo.find(filter)
-      .sort({ displayOrder: 1, year: 1, createdAt: -1 });
+      .sort({ createdAt: -1 });
 
     return res.json(photos);
   } catch (error) {
