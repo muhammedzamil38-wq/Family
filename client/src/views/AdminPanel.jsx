@@ -47,6 +47,7 @@ export default function AdminPanel() {
   const [editingBook, setEditingBook] = useState(null); // null if creating, book object if editing
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [editingMember, setEditingMember] = useState(null); // null if creating, member object if editing
+  const [selectedMember, setSelectedMember] = useState(null);
   const [showDeleteMemberModal, setShowDeleteMemberModal] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -346,6 +347,10 @@ export default function AdminPanel() {
     }
     setMemberPortraitFile(null);
     setShowMemberModal(true);
+  };
+
+  const openMemberDetails = (member) => {
+    setSelectedMember(member);
   };
 
   const handleMemberSubmit = async (e) => {
@@ -1013,8 +1018,8 @@ export default function AdminPanel() {
             {/* TAB 3: FAMILY TREE CMS */}
             {activeTab === 'family' && (
               <div className="family-cms-view animate-fade-in">
-                <div className="cms-toolbar">
-                  <button onClick={() => openMemberForm(null)} className="btn btn-primary">
+                <div className="cms-toolbar family-cms-toolbar">
+                  <button onClick={() => openMemberForm(null)} className="btn btn-primary family-add-btn">
                     <Plus size={16} /> Add Family Member
                   </button>
                 </div>
@@ -1025,24 +1030,17 @@ export default function AdminPanel() {
                       <tr>
                         <th>Portrait</th>
                         <th>Full Name</th>
-                        <th>Parent</th>
-                        <th>Relationship</th>
-                        <th>Years</th>
-                        <th>Sort Order</th>
-                        <th>Visible</th>
-                        <th>Actions</th>
+                        <th>Root</th>
+                        <th className="desktop-member-actions">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {familyMembers.length > 0 ? (
                         familyMembers.map((member) => {
                           const parentName = familyMembers.find(m => m._id === member.parentId)?.fullName || 'None (Founder)';
-                          const years = [member.birthYear, member.deathYear]
-                            .filter(y => y !== undefined && y !== null)
-                            .join(' – ');
 
                           return (
-                            <tr key={member._id}>
+                            <tr key={member._id} onClick={() => openMemberDetails(member)} className="member-admin-row">
                               <td>
                                 <div className="table-portrait-wrapper">
                                   {member.portraitPath ? (
@@ -1056,28 +1054,18 @@ export default function AdminPanel() {
                               </td>
                               <td><strong>{member.fullName}</strong></td>
                               <td><span className="parent-indicator">{parentName}</span></td>
-                              <td><span className="relationship-badge">{member.relationshipLabel || '—'}</span></td>
-                              <td>{years || '—'}</td>
-                              <td>{member.displayOrder}</td>
-                              <td>
-                                {member.isVisible ? (
-                                  <span className="visibility-badge visible"><Eye size={14} /> Yes</span>
-                                ) : (
-                                  <span className="visibility-badge hidden"><EyeOff size={14} /> No</span>
-                                )}
-                              </td>
-                              <td>
+                              <td className="desktop-member-actions">
                                 <div className="table-actions">
-                                  <button 
-                                    onClick={() => openMemberForm(member)} 
-                                    className="btn-icon edit" 
+                                  <button
+                                    onClick={(event) => { event.stopPropagation(); openMemberForm(member); }}
+                                    className="btn-icon edit"
                                     title="Edit member"
                                   >
                                     <Edit size={16} />
                                   </button>
-                                  <button 
-                                    onClick={() => startDeleteMember(member)} 
-                                    className="btn-icon delete" 
+                                  <button
+                                    onClick={(event) => { event.stopPropagation(); startDeleteMember(member); }}
+                                    className="btn-icon delete"
                                     title="Delete member"
                                   >
                                     <Trash2 size={16} />
@@ -1089,7 +1077,7 @@ export default function AdminPanel() {
                         })
                       ) : (
                         <tr>
-                          <td colSpan="8" className="table-empty">No family member records found. Start by adding a founding member parent.</td>
+                          <td colSpan="4" className="table-empty">No family member records found. Start by adding a founding member parent.</td>
                         </tr>
                       )}
                     </tbody>
@@ -1535,6 +1523,47 @@ export default function AdminPanel() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Family Member Details Modal */}
+      {selectedMember && (
+        <div className="modal-backdrop" onClick={() => setSelectedMember(null)}>
+          <div className="glass-card member-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{selectedMember.fullName}</h3>
+              <button className="modal-close" onClick={() => setSelectedMember(null)}><X size={20} /></button>
+            </div>
+
+            <div className="member-details-content">
+              <div className="member-details-portrait">
+                {selectedMember.portraitPath ? (
+                  <img
+                    src={selectedMember.portraitPath.startsWith('http://') || selectedMember.portraitPath.startsWith('https://')
+                      ? selectedMember.portraitPath
+                      : `${API_BASE_URL}/${selectedMember.portraitPath}`}
+                    alt={selectedMember.fullName}
+                  />
+                ) : <Users size={34} />}
+              </div>
+              <div className="member-details-fields">
+                <p><strong>Root:</strong> {familyMembers.find(m => m._id === selectedMember.parentId)?.fullName || 'None (Founder)'}</p>
+                <p><strong>Relationship:</strong> {selectedMember.relationshipLabel || 'Not specified'}</p>
+                <p><strong>Years:</strong> {[selectedMember.birthYear, selectedMember.deathYear].filter(Boolean).join(' - ') || 'Not specified'}</p>
+                <p><strong>Visibility:</strong> {selectedMember.isVisible ? 'Visible' : 'Hidden'}</p>
+                <p><strong>Biography:</strong> {selectedMember.bio || 'No biography added.'}</p>
+              </div>
+            </div>
+
+            <div className="modal-actions border-t pt-4 member-detail-actions">
+              <button type="button" className="btn btn-primary" onClick={() => { setSelectedMember(null); openMemberForm(selectedMember); }}>
+                <Edit size={16} /> Edit Member
+              </button>
+              <button type="button" className="btn btn-danger" onClick={() => { setSelectedMember(null); startDeleteMember(selectedMember); }}>
+                <Trash2 size={16} /> Delete Member
+              </button>
+            </div>
           </div>
         </div>
       )}
