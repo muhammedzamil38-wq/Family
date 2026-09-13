@@ -24,7 +24,6 @@ export function uploadImage(buffer) {
 
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream({
-      folder: process.env.CLOUDINARY_FOLDER || 'family-heritage/photos',
       resource_type: 'image'
     }, (error, result) => {
       if (error) return reject(error);
