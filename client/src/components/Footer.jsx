@@ -12,7 +12,9 @@ export default function Footer() {
           &copy; {currentYear} <strong>{appName}</strong>. All rights reserved.
         </p>
         <div className="footer-links">
-          <a href="#privacy" className="footer-link">Privacy Policy</a>
+          <a href="/assets/privacy-policy.txt" target="_blank" rel="noreferrer" className="footer-link">
+            Privacy Policy
+          </a>
           <span className="divider">•</span>
           <Link to="/contact" className="footer-link">Contact</Link>
         </div>

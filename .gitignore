@@ -38,3 +38,4 @@ Thumbs.db
 *.sw?
 frontend.env
 backend.env
+assets
