@@ -40,6 +40,7 @@ import {
   updatePhoto,
   updatePhotoVisibility,
   updatePhotoPinning,
+  updatePhotosPinningBatch,
   deletePhoto,
   deletePhotosBatch
 } from './controllers/adminController.js';
@@ -223,6 +224,7 @@ app.post('/api/v1/admin/photos/batch', requireAdmin, uploadPhoto.array('photo', 
 app.post('/api/v1/admin/photos', requireAdmin, uploadPhoto.single('photo'), checkUploadLimits, createPhoto);
 app.patch('/api/v1/admin/photos/:id', requireAdmin, uploadPhoto.single('photo'), checkUploadLimits, updatePhoto);
 app.patch('/api/v1/admin/photos/:id/visibility', requireAdmin, updatePhotoVisibility);
+app.patch('/api/v1/admin/photos/batch/pinning', requireAdmin, updatePhotosPinningBatch);
 app.patch('/api/v1/admin/photos/:id/pinning', requireAdmin, updatePhotoPinning);
 app.delete('/api/v1/admin/photos/batch', requireAdmin, deletePhotosBatch);
 app.delete('/api/v1/admin/photos/:id', requireAdmin, deletePhoto);

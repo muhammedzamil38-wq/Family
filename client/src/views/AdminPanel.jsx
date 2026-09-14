@@ -813,6 +813,38 @@ export default function AdminPanel() {
     }
   };
 
+  const handleToggleSelectedPhotoPinning = async () => {
+    if (selectedPhotoIds.length === 0) return;
+
+    const selectedPhotos = photos.filter((photo) => selectedPhotoIds.includes(photo._id));
+    const shouldPin = selectedPhotos.some((photo) => !photo.isPinned);
+    setCmsErrors([]);
+    setActionLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/photos/batch/pinning`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedPhotoIds, isPinned: shouldPin }),
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (res.status === 401) {
+        await logoutUser();
+        navigate('/admin/login');
+        return;
+      }
+      if (!res.ok) throw new Error((data.errors || [data.message]).join(', '));
+
+      showSuccess(data.message);
+      refreshData();
+    } catch (err) {
+      console.error(err);
+      setCmsErrors([err.message || 'Failed to update selected pinning.']);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const confirmDeletePhoto = (photo) => {
     setPhotoToDelete(photo);
     setShowDeletePhotoModal(true);
@@ -1521,9 +1553,14 @@ export default function AdminPanel() {
                       </button>
                     )}
                     {selectedPhotoIds.length > 0 && (
-                      <button onClick={handleDeleteSelectedPhotos} className="btn btn-danger" disabled={actionLoading}>
-                        <Trash2 size={16} /> Delete Selected ({selectedPhotoIds.length})
-                      </button>
+                      <>
+                        <button onClick={handleToggleSelectedPhotoPinning} className="btn btn-secondary" disabled={actionLoading}>
+                          <Pin size={16} /> {photos.filter((photo) => selectedPhotoIds.includes(photo._id)).some((photo) => !photo.isPinned) ? 'Pin Selected' : 'Unpin Selected'}
+                        </button>
+                        <button onClick={handleDeleteSelectedPhotos} className="btn btn-danger" disabled={actionLoading}>
+                          <Trash2 size={16} /> Delete Selected ({selectedPhotoIds.length})
+                        </button>
+                      </>
                     )}
                     <button onClick={() => openPhotoForm(null)} className="btn btn-primary">
                       <Plus size={16} /> Upload New Photograph

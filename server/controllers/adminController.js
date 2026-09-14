@@ -1332,3 +1332,43 @@ export async function deletePhotosBatch(req, res) {
   }
 }
 
+/**
+ * Pins or unpins multiple gallery records.
+ * PATCH /api/v1/admin/photos/batch/pinning
+ */
+export async function updatePhotosPinningBatch(req, res) {
+  const { ids, isPinned } = req.body;
+
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 100) {
+    return res.status(400).json({
+      message: 'Validation error',
+      errors: ['Select between 1 and 100 gallery items to update.']
+    });
+  }
+
+  try {
+    const pinned = isPinned === true || isPinned === 'true';
+    const result = await Photo.updateMany(
+      { _id: { $in: ids } },
+      { $set: { isPinned: pinned } }
+    );
+
+    if (result.matchedCount !== ids.length) {
+      return res.status(404).json({
+        message: 'Some gallery items were not found',
+        errors: ['Refresh the gallery and try again.']
+      });
+    }
+
+    return res.json({
+      message: `${ids.length} gallery item${ids.length === 1 ? '' : 's'} ${pinned ? 'pinned' : 'unpinned'} successfully.`
+    });
+  } catch (error) {
+    console.error('Error updating gallery pinning batch:', error);
+    return res.status(500).json({
+      message: 'Internal server error',
+      errors: [error.message]
+    });
+  }
+}
+
