@@ -911,7 +911,7 @@ export async function updateAdminSiteContent(req, res) {
  */
 export async function getAllPhotos(req, res) {
   try {
-    const photos = await Photo.find().sort({ createdAt: -1 });
+    const photos = await Photo.find().sort({ isPinned: -1, createdAt: -1 });
     return res.json(photos);
   } catch (error) {
     console.error('Error fetching admin photos:', error);
@@ -1204,6 +1204,39 @@ export async function updatePhotoVisibility(req, res) {
 }
 
 /**
+ * Quick toggle for a photo's pinned status.
+ * PATCH /api/v1/admin/photos/:id/pinning
+ */
+export async function updatePhotoPinning(req, res) {
+  const { id } = req.params;
+  const { isPinned } = req.body;
+
+  try {
+    const photo = await Photo.findById(id);
+    if (!photo) {
+      return res.status(404).json({
+        message: 'Photo not found',
+        errors: [`No photograph found with ID: ${id}`]
+      });
+    }
+
+    photo.isPinned = isPinned === true || isPinned === 'true';
+    await photo.save();
+
+    return res.json({
+      message: `Photo ${photo.isPinned ? 'pinned' : 'unpinned'} successfully.`,
+      photo
+    });
+  } catch (error) {
+    console.error('Error toggling photo pinning:', error);
+    return res.status(500).json({
+      message: 'Internal server error',
+      errors: [error.message]
+    });
+  }
+}
+
+/**
  * Deletes a photograph record and removes file from disk.
  * DELETE /api/v1/admin/photos/:id
  */
@@ -1240,6 +1273,58 @@ export async function deletePhoto(req, res) {
     });
   } catch (error) {
     console.error('Error deleting photo:', error);
+    return res.status(500).json({
+      message: 'Internal server error',
+      errors: [error.message]
+    });
+  }
+}
+
+/**
+ * Deletes multiple gallery records and their media assets.
+ * DELETE /api/v1/admin/photos/batch
+ */
+export async function deletePhotosBatch(req, res) {
+  const { ids } = req.body;
+
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 100) {
+    return res.status(400).json({
+      message: 'Validation error',
+      errors: ['Select between 1 and 100 gallery items to delete.']
+    });
+  }
+
+  try {
+    const photos = await Photo.find({ _id: { $in: ids } });
+    if (photos.length !== ids.length) {
+      return res.status(404).json({
+        message: 'Some gallery items were not found',
+        errors: ['Refresh the gallery and try again.']
+      });
+    }
+
+    for (const photo of photos) {
+      try {
+        await deleteMedia(photo.cloudinaryPublicId, photo.resourceType);
+      } catch (cleanupError) {
+        console.warn(`Could not delete Cloudinary photo ${photo._id}:`, cleanupError.message);
+      }
+
+      await Photo.findByIdAndDelete(photo._id);
+      await logAdminAction(
+        req.session.user.id,
+        'DELETE_PHOTO',
+        'Photo',
+        photo._id,
+        { title: photo.title }
+      );
+    }
+
+    return res.json({
+      message: `${photos.length} gallery item${photos.length === 1 ? '' : 's'} deleted successfully.`
+    });
+  } catch (error) {
+    console.error('Error deleting gallery batch:', error);
     return res.status(500).json({
       message: 'Internal server error',
       errors: [error.message]

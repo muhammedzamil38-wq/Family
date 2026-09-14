@@ -6,7 +6,7 @@ import {
   LayoutDashboard, BookOpen, Users, FileText, Settings, 
   LogOut, Plus, Edit, Trash2, Globe, Eye, EyeOff, 
   Upload, AlertTriangle, Save, RefreshCw, X, ChevronRight, Check,
-  Camera, Image as ImageIcon, Video, MapPin, Calendar, Tag, Search
+  Camera, Image as ImageIcon, Video, MapPin, Calendar, Tag, Search, Pin
 } from 'lucide-react';
 import DynamicIcon from '../components/DynamicIcon';
 
@@ -54,6 +54,7 @@ export default function AdminPanel() {
   const [editingPhoto, setEditingPhoto] = useState(null); // null if creating, photo object if editing
   const [showDeletePhotoModal, setShowDeletePhotoModal] = useState(false);
   const [photoToDelete, setPhotoToDelete] = useState(null);
+  const [selectedPhotoIds, setSelectedPhotoIds] = useState([]);
 
   // Forms Reference Hooks / Controlled States
   // 1. Books Form
@@ -748,6 +749,67 @@ export default function AdminPanel() {
     } catch (err) {
       console.error(err);
       setCmsErrors(['Error changing photograph visibility.']);
+    }
+  };
+
+  const handleTogglePhotoPinning = async (photo) => {
+    setCmsErrors([]);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/photos/${photo._id}/pinning`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPinned: !photo.isPinned }),
+        credentials: 'include'
+      });
+      if (res.ok) {
+        showSuccess(photo.isPinned ? 'Photo unpinned.' : 'Photo pinned to the front of the gallery.');
+        refreshData();
+      } else {
+        const data = await res.json();
+        setCmsErrors(data.errors || [data.message]);
+      }
+    } catch (err) {
+      console.error(err);
+      setCmsErrors(['Error changing photograph pinning.']);
+    }
+  };
+
+  const togglePhotoSelection = (photoId) => {
+    setSelectedPhotoIds((currentIds) => currentIds.includes(photoId)
+      ? currentIds.filter((id) => id !== photoId)
+      : [...currentIds, photoId]);
+  };
+
+  const toggleSelectAllPhotos = () => {
+    setSelectedPhotoIds((currentIds) => currentIds.length === photos.length
+      ? []
+      : photos.map((photo) => photo._id));
+  };
+
+  const handleDeleteSelectedPhotos = async () => {
+    if (selectedPhotoIds.length === 0) return;
+    if (!window.confirm(`Delete ${selectedPhotoIds.length} selected gallery item${selectedPhotoIds.length === 1 ? '' : 's'}? This cannot be undone.`)) return;
+
+    setCmsErrors([]);
+    setActionLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/photos/batch`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedPhotoIds }),
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error((data.errors || [data.message]).join(', '));
+
+      showSuccess(data.message);
+      setSelectedPhotoIds([]);
+      refreshData();
+    } catch (err) {
+      console.error(err);
+      setCmsErrors([err.message || 'Failed to delete selected gallery items.']);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -1452,9 +1514,21 @@ export default function AdminPanel() {
                     <h3>Vintage Photo Gallery ({photos.length})</h3>
                     <p className="card-subtitle">Manage the photographs in your family gallery.</p>
                   </div>
-                  <button onClick={() => openPhotoForm(null)} className="btn btn-primary">
-                    <Plus size={16} /> Upload New Photograph
-                  </button>
+                  <div className="cms-actions-group">
+                    {photos.length > 0 && (
+                      <button onClick={toggleSelectAllPhotos} className="btn btn-secondary">
+                        <Check size={16} /> {selectedPhotoIds.length === photos.length ? 'Clear Selection' : 'Select All'}
+                      </button>
+                    )}
+                    {selectedPhotoIds.length > 0 && (
+                      <button onClick={handleDeleteSelectedPhotos} className="btn btn-danger" disabled={actionLoading}>
+                        <Trash2 size={16} /> Delete Selected ({selectedPhotoIds.length})
+                      </button>
+                    )}
+                    <button onClick={() => openPhotoForm(null)} className="btn btn-primary">
+                      <Plus size={16} /> Upload New Photograph
+                    </button>
+                  </div>
                 </div>
 
                 {photos.length > 0 ? (
@@ -1462,14 +1536,36 @@ export default function AdminPanel() {
                     {photos.map((photo) => (
                       <div key={photo._id} className="admin-photo-card glass-card">
                         <div className="admin-photo-thumb-wrapper">
+                          <label className="admin-photo-select" title="Select gallery item">
+                            <input
+                              type="checkbox"
+                              checked={selectedPhotoIds.includes(photo._id)}
+                              onChange={() => togglePhotoSelection(photo._id)}
+                              aria-label={`Select ${photo.title || 'gallery item'}`}
+                            />
+                          </label>
                           {(photo.resourceType || 'image') === 'video' ? (
                             <video src={getImageUrl(photo.imageUrl)} className="admin-photo-thumb" muted preload="metadata" />
                           ) : (
                             <img src={getImageUrl(photo.imageUrl || photo.imagePath)} alt="Family photograph" className="admin-photo-thumb" />
                           )}
+                          {photo.isPinned && (
+                            <span className="admin-photo-pinned-badge" title="Pinned to front of gallery">
+                              <Pin size={13} fill="currentColor" /> Pinned
+                            </span>
+                          )}
                         </div>
 
                         <div className="admin-photo-card-actions">
+                          <button
+                            onClick={() => handleTogglePhotoPinning(photo)}
+                            className={`btn-icon ${photo.isPinned ? 'publish' : ''}`}
+                            title={photo.isPinned ? 'Unpin from front of gallery' : 'Pin to front of gallery'}
+                            aria-label={photo.isPinned ? 'Unpin photo' : 'Pin photo'}
+                          >
+                            <Pin size={16} fill={photo.isPinned ? 'currentColor' : 'none'} />
+                          </button>
+
                           <button
                             onClick={() => handleTogglePhotoVisibility(photo)}
                             className={`btn-icon ${photo.isVisible ? 'publish' : 'unpublish'}`}

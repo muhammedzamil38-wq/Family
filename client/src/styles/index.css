@@ -2750,6 +2750,21 @@ select.glass-input {
   font-weight: 600;
 }
 
+.gallery-pinned-badge {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .gallery-card:hover .gallery-image {
   transform: scale(1.04);
 }
@@ -3101,6 +3116,42 @@ select.glass-input {
   aspect-ratio: 4/3;
   background: #0f172a;
   overflow: hidden;
+}
+
+.admin-photo-select {
+  position: absolute;
+  z-index: 1;
+  top: 10px;
+  left: 10px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.72);
+  cursor: pointer;
+}
+
+.admin-photo-select input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.admin-photo-pinned-badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .admin-photo-thumb {

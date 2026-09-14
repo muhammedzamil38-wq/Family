@@ -29,6 +29,10 @@ const PhotoSchema = new mongoose.Schema({
   isVisible: {
     type: Boolean,
     default: true
+  },
+  isPinned: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

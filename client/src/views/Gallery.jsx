@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Camera, X, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut, Sparkles, Video } from 'lucide-react';
+import { Camera, X, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut, Sparkles, Video, Pin } from 'lucide-react';
 
 export default function Gallery() {
   const [photos, setPhotos] = useState([]);
@@ -20,9 +20,10 @@ export default function Gallery() {
     return `${API_BASE_URL}/${cleanPath}`;
   };
 
-  const sortedPhotos = [...photos].sort((a, b) => (
-    new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-  ));
+  const sortedPhotos = [...photos].sort((a, b) => {
+    if (Boolean(a.isPinned) !== Boolean(b.isPinned)) return a.isPinned ? -1 : 1;
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+  });
   const filteredPhotos = mediaFilter === 'all'
     ? sortedPhotos
     : sortedPhotos.filter((photo) => (photo.resourceType || 'image') === mediaFilter);
@@ -147,6 +148,11 @@ export default function Gallery() {
                       {(photo.resourceType || 'image') === 'video' ? <Video size={14} /> : <Camera size={14} />}
                       {(photo.resourceType || 'image') === 'video' ? 'Video' : 'Photo'}
                     </span>
+                    {photo.isPinned && (
+                      <span className="gallery-pinned-badge" title="Pinned family memory" aria-label="Pinned family memory">
+                        <Pin size={14} fill="currentColor" /> Pinned
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
