@@ -20,9 +20,12 @@ export default function Gallery() {
     return `${API_BASE_URL}/${cleanPath}`;
   };
 
+  const sortedPhotos = [...photos].sort((a, b) => (
+    new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+  ));
   const filteredPhotos = mediaFilter === 'all'
-    ? photos
-    : photos.filter((photo) => (photo.resourceType || 'image') === mediaFilter);
+    ? sortedPhotos
+    : sortedPhotos.filter((photo) => (photo.resourceType || 'image') === mediaFilter);
 
   // Fetch all public photos on mount.
   useEffect(() => {

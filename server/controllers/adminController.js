@@ -987,6 +987,62 @@ export async function createPhoto(req, res) {
 }
 
 /**
+ * Creates a gallery batch and rolls back the whole batch if any upload fails.
+ * POST /api/v1/admin/photos/batch
+ */
+export async function createPhotoBatch(req, res) {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({
+      message: 'Validation failed',
+      errors: ['At least one photo or video file is required.']
+    });
+  }
+
+  const uploadedMedia = [];
+  const savedPhotos = [];
+
+  try {
+    for (const file of req.files) {
+      const resourceType = file.mimetype.startsWith('video/') ? 'video' : 'image';
+      const media = await uploadMedia(file.buffer, resourceType);
+      uploadedMedia.push(media);
+
+      const photo = await Photo.create({
+        title: resourceType === 'video' ? 'Video' : 'Photograph',
+        ...media,
+        isVisible: true
+      });
+      savedPhotos.push(photo);
+    }
+
+    await Promise.all(savedPhotos.map((photo) => logAdminAction(
+      req.session.user.id,
+      'CREATE_PHOTO',
+      'Photo',
+      photo._id,
+      { title: photo.title, resourceType: photo.resourceType }
+    )));
+
+    return res.status(201).json({
+      message: `${savedPhotos.length} gallery item${savedPhotos.length === 1 ? '' : 's'} uploaded successfully.`,
+      photos: savedPhotos
+    });
+  } catch (error) {
+    console.error('Error creating photo batch; rolling back batch:', error);
+    await Promise.all(savedPhotos.map((photo) => Photo.findByIdAndDelete(photo._id)));
+    await Promise.all(uploadedMedia.map((media) => deleteMedia(media.cloudinaryPublicId, media.resourceType)));
+
+    const statusCode = isCloudinaryError(error) ? 502 : 500;
+    return res.status(statusCode).json({
+      message: statusCode === 502
+        ? 'Cloudinary rejected one of the uploads. No files were added to the gallery.'
+        : 'The gallery batch could not be uploaded. No files were added to the gallery.',
+      errors: process.env.NODE_ENV === 'development' ? [error.message] : []
+    });
+  }
+}
+
+/**
  * Updates a photo gallery record with optional image replacement.
  * PATCH /api/v1/admin/photos/:id
  */

@@ -656,23 +656,21 @@ export default function AdminPanel() {
     }
 
     try {
-      await Promise.all(filesToUpload.map(async (file) => {
-        const formData = new FormData();
-        formData.append('photo', file);
+      const formData = new FormData();
+      filesToUpload.forEach((file) => formData.append('photo', file));
 
-        const url = editingPhoto
-          ? `${API_BASE_URL}/api/v1/admin/photos/${editingPhoto._id}`
-          : `${API_BASE_URL}/api/v1/admin/photos`;
-        const res = await fetch(url, {
-          method: editingPhoto ? 'PATCH' : 'POST',
-          body: formData,
-          credentials: 'include'
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error((data.errors || [data.message]).join(', '));
-        }
-      }));
+      const url = editingPhoto
+        ? `${API_BASE_URL}/api/v1/admin/photos/${editingPhoto._id}`
+        : `${API_BASE_URL}/api/v1/admin/photos/batch`;
+      const res = await fetch(url, {
+        method: editingPhoto ? 'PATCH' : 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error((data.errors || [data.message]).join(', '));
+      }
 
       showSuccess(editingPhoto
         ? 'Photograph updated successfully!'

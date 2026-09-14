@@ -33,6 +33,7 @@ import {
   updateAdminSiteContent,
   getAllPhotos,
   createPhoto,
+  createPhotoBatch,
   updatePhoto,
   updatePhotoVisibility,
   deletePhoto
@@ -201,6 +202,7 @@ app.delete('/api/v1/admin/family-members/:id', requireAdmin, deleteFamilyMember)
 
 // Photo Gallery Management
 app.get('/api/v1/admin/photos', requireAdmin, getAllPhotos);
+app.post('/api/v1/admin/photos/batch', requireAdmin, uploadPhoto.array('photo', 100), checkUploadLimits, createPhotoBatch);
 app.post('/api/v1/admin/photos', requireAdmin, uploadPhoto.single('photo'), checkUploadLimits, createPhoto);
 app.patch('/api/v1/admin/photos/:id', requireAdmin, uploadPhoto.single('photo'), checkUploadLimits, updatePhoto);
 app.patch('/api/v1/admin/photos/:id/visibility', requireAdmin, updatePhotoVisibility);

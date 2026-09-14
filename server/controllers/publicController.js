@@ -169,7 +169,7 @@ export async function getPublicPhotos(req, res) {
     const filter = { isVisible: true };
 
     const photos = await Photo.find(filter)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1, _id: -1 });
 
     return res.json(photos);
   } catch (error) {

@@ -117,8 +117,9 @@ export const uploadPortrait = multer({
  * Deletes uploaded file from disk if it violates size guidelines.
  */
 export function checkUploadLimits(req, res, next) {
-  if (req.file) {
-    const file = req.file;
+  const files = req.files || (req.file ? [req.file] : []);
+
+  for (const file of files) {
 
     if (file.fieldname === 'pdf' && file.size > maxPdfSizeBytes) {
       if (file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
