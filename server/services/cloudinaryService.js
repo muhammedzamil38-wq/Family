@@ -42,6 +42,23 @@ export function uploadImage(buffer) {
   return uploadMedia(buffer, 'image');
 }
 
+export function getUploadSignature(resourceType = 'image') {
+  configureCloudinary();
+  const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } = process.env;
+  const timestamp = Math.floor(Date.now() / 1000);
+  const folder = 'family-gallery';
+  const signature = cloudinary.utils.api_sign_request({ folder, timestamp }, CLOUDINARY_API_SECRET);
+
+  return {
+    cloudName: CLOUDINARY_CLOUD_NAME,
+    apiKey: CLOUDINARY_API_KEY,
+    folder,
+    resourceType,
+    timestamp,
+    signature
+  };
+}
+
 export function isCloudinaryError(error) {
   return Boolean(error?.http_code || error?.name === 'AuthorizationRequiredError');
 }

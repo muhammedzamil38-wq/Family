@@ -655,21 +655,62 @@ export default function AdminPanel() {
       return;
     }
 
-    try {
-      const formData = new FormData();
-      filesToUpload.forEach((file) => formData.append('photo', file));
-
-      const url = editingPhoto
-        ? `${API_BASE_URL}/api/v1/admin/photos/${editingPhoto._id}`
-        : `${API_BASE_URL}/api/v1/admin/photos/batch`;
-      const res = await fetch(url, {
-        method: editingPhoto ? 'PATCH' : 'POST',
-        body: formData,
+    const uploadedMedia = [];
+    const cleanupUploadedMedia = async () => {
+      await Promise.all(uploadedMedia.map((media) => fetch(`${API_BASE_URL}/api/v1/admin/photos/cleanup-upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publicId: media.cloudinaryPublicId, resourceType: media.resourceType }),
         credentials: 'include'
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error((data.errors || [data.message]).join(', '));
+      })));
+    };
+
+    try {
+      if (editingPhoto) {
+        const formData = new FormData();
+        formData.append('photo', filesToUpload[0]);
+        const res = await fetch(`${API_BASE_URL}/api/v1/admin/photos/${editingPhoto._id}`, {
+          method: 'PATCH', body: formData, credentials: 'include'
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error((data.errors || [data.message]).join(', '));
+      } else {
+        for (const file of filesToUpload) {
+          const resourceType = file.type.startsWith('video/') ? 'video' : 'image';
+          const maxBytes = resourceType === 'video' ? 100 * 1024 * 1024 : 5 * 1024 * 1024;
+          if (file.size > maxBytes) {
+            throw new Error(`${resourceType === 'video' ? 'Video' : 'Photo'} files must be ${resourceType === 'video' ? '100MB' : '5MB'} or smaller.`);
+          }
+          const signatureRes = await fetch(`${API_BASE_URL}/api/v1/admin/photos/upload-signature?resourceType=${resourceType}`, { credentials: 'include' });
+          const signature = await signatureRes.json();
+          if (!signatureRes.ok) throw new Error((signature.errors || [signature.message]).join(', '));
+
+          const cloudinaryForm = new FormData();
+          cloudinaryForm.append('file', file);
+          cloudinaryForm.append('api_key', signature.apiKey);
+          cloudinaryForm.append('timestamp', signature.timestamp);
+          cloudinaryForm.append('folder', signature.folder);
+          cloudinaryForm.append('signature', signature.signature);
+          const cloudinaryRes = await fetch(`https://api.cloudinary.com/v1_1/${signature.cloudName}/${resourceType}/upload`, {
+            method: 'POST', body: cloudinaryForm
+          });
+          const cloudinaryData = await cloudinaryRes.json();
+          if (!cloudinaryRes.ok) throw new Error(cloudinaryData.error?.message || 'Cloudinary upload failed.');
+          uploadedMedia.push({
+            imageUrl: cloudinaryData.secure_url,
+            cloudinaryPublicId: cloudinaryData.public_id,
+            resourceType
+          });
+        }
+
+        const recordsRes = await fetch(`${API_BASE_URL}/api/v1/admin/photos/batch-records`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ media: uploadedMedia }),
+          credentials: 'include'
+        });
+        const recordsData = await recordsRes.json();
+        if (!recordsRes.ok) throw new Error((recordsData.errors || [recordsData.message]).join(', '));
       }
 
       showSuccess(editingPhoto
@@ -678,6 +719,9 @@ export default function AdminPanel() {
       setShowPhotoModal(false);
       refreshData();
     } catch (err) {
+      if (!editingPhoto && uploadedMedia.length > 0) {
+        await cleanupUploadedMedia();
+      }
       console.error('Error saving photo:', err);
       setCmsErrors([err.message || 'Network error saving photograph.']);
     } finally {

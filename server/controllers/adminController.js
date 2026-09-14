@@ -7,7 +7,7 @@ import SiteContent from '../models/SiteContent.js';
 import AuditLog from '../models/AuditLog.js';
 import Photo from '../models/Photo.js';
 import { generatePdfCover } from '../services/pdfService.js';
-import { deleteImage, deleteMedia, isCloudinaryError, uploadImage, uploadMedia } from '../services/cloudinaryService.js';
+import { deleteImage, deleteMedia, getUploadSignature, isCloudinaryError, uploadImage, uploadMedia } from '../services/cloudinaryService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1039,6 +1039,56 @@ export async function createPhotoBatch(req, res) {
         : 'The gallery batch could not be uploaded. No files were added to the gallery.',
       errors: process.env.NODE_ENV === 'development' ? [error.message] : []
     });
+  }
+}
+
+export function getPhotoUploadSignature(req, res) {
+  try {
+    const resourceType = req.query.resourceType === 'video' ? 'video' : 'image';
+    return res.json(getUploadSignature(resourceType));
+  } catch (error) {
+    return res.status(500).json({ message: 'Could not prepare media upload.', errors: [error.message] });
+  }
+}
+
+export async function createPhotoRecordsBatch(req, res) {
+  const media = Array.isArray(req.body.media) ? req.body.media : [];
+  if (media.length === 0 || media.length > 100) {
+    return res.status(400).json({ message: 'Invalid gallery batch.', errors: ['Send between 1 and 100 media items.'] });
+  }
+
+  const savedPhotos = [];
+  try {
+    for (const item of media) {
+      if (!item.imageUrl || !item.cloudinaryPublicId || !['image', 'video'].includes(item.resourceType)) {
+        throw new Error('Invalid Cloudinary media details.');
+      }
+      savedPhotos.push(await Photo.create({
+        title: item.resourceType === 'video' ? 'Video' : 'Photograph',
+        imageUrl: item.imageUrl,
+        cloudinaryPublicId: item.cloudinaryPublicId,
+        resourceType: item.resourceType,
+        isVisible: true
+      }));
+    }
+
+    return res.status(201).json({ photos: savedPhotos });
+  } catch (error) {
+    await Promise.all(savedPhotos.map((photo) => Photo.findByIdAndDelete(photo._id)));
+    return res.status(500).json({ message: 'No gallery items were added.', errors: [error.message] });
+  }
+}
+
+export async function deleteUploadedMedia(req, res) {
+  const { publicId, resourceType } = req.body;
+  if (!publicId || !['image', 'video'].includes(resourceType)) {
+    return res.status(400).json({ message: 'Invalid media cleanup request.' });
+  }
+  try {
+    await deleteMedia(publicId, resourceType);
+    return res.json({ message: 'Uploaded media cleaned up.' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Could not clean up uploaded media.' });
   }
 }
 

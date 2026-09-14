@@ -34,6 +34,9 @@ import {
   getAllPhotos,
   createPhoto,
   createPhotoBatch,
+  getPhotoUploadSignature,
+  createPhotoRecordsBatch,
+  deleteUploadedMedia,
   updatePhoto,
   updatePhotoVisibility,
   deletePhoto
@@ -52,6 +55,10 @@ dotenv.config({ path: path.resolve(__dirname, 'backend.env') });
 const app = express();
 const PORT = process.env.PORT || 5000;
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+const allowedFrontendOrigins = new Set([
+  FRONTEND_URL,
+  'https://family-roan-chi.vercel.app'
+]);
 const isProduction = process.env.NODE_ENV === 'production';
 const MONGODB_URI = process.env.MONGODB_URI || (isProduction ? '' : 'mongodb://mongo:27017/family_library');
 const SESSION_SECRET = process.env.SESSION_SECRET || 'fallback_session_secret_12345';
@@ -91,7 +98,12 @@ function connectToDatabase() {
 
 // 2. CORS Policy Configuration
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: (origin, callback) => {
+    if (!origin || allowedFrontendOrigins.has(origin.replace(/\/+$/, ''))) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origin is not allowed by CORS.'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -202,6 +214,9 @@ app.delete('/api/v1/admin/family-members/:id', requireAdmin, deleteFamilyMember)
 
 // Photo Gallery Management
 app.get('/api/v1/admin/photos', requireAdmin, getAllPhotos);
+app.get('/api/v1/admin/photos/upload-signature', requireAdmin, getPhotoUploadSignature);
+app.post('/api/v1/admin/photos/batch-records', requireAdmin, createPhotoRecordsBatch);
+app.post('/api/v1/admin/photos/cleanup-upload', requireAdmin, deleteUploadedMedia);
 app.post('/api/v1/admin/photos/batch', requireAdmin, uploadPhoto.array('photo', 100), checkUploadLimits, createPhotoBatch);
 app.post('/api/v1/admin/photos', requireAdmin, uploadPhoto.single('photo'), checkUploadLimits, createPhoto);
 app.patch('/api/v1/admin/photos/:id', requireAdmin, uploadPhoto.single('photo'), checkUploadLimits, updatePhoto);
