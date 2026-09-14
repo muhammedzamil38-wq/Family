@@ -17,8 +17,10 @@
   --danger-hover: #8c2c2c;
   --success: #2e7d32;
   
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: var(--font-heading);
+  --font-sans: var(--font-body);
   --blur: 12px;
   --transition-speed: 0.3s;
 }

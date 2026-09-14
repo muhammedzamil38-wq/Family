@@ -1,0 +1,61 @@
+export const FONT_OPTIONS = [
+  { label: 'Playfair Display', family: 'Playfair Display', source: 'google' },
+  { label: 'Cormorant Garamond', family: 'Cormorant Garamond', source: 'google' },
+  { label: 'Libre Baskerville', family: 'Libre Baskerville', source: 'google' },
+  { label: 'Lora', family: 'Lora', source: 'google' },
+  { label: 'Merriweather', family: 'Merriweather', source: 'google' },
+  { label: 'Bodoni Moda', family: 'Bodoni Moda', source: 'google' },
+  { label: 'DM Serif Display', family: 'DM Serif Display', source: 'google' },
+  { label: 'EB Garamond', family: 'EB Garamond', source: 'google' },
+  { label: 'Crimson Pro', family: 'Crimson Pro', source: 'google' },
+  { label: 'Fraunces', family: 'Fraunces', source: 'google' },
+  { label: 'Bitter', family: 'Bitter', source: 'google' },
+  { label: 'Rokkitt', family: 'Rokkitt', source: 'google' },
+  { label: 'Inter', family: 'Inter', source: 'google' },
+  { label: 'Roboto', family: 'Roboto', source: 'google' },
+  { label: 'Open Sans', family: 'Open Sans', source: 'google' },
+  { label: 'Lato', family: 'Lato', source: 'google' },
+  { label: 'Montserrat', family: 'Montserrat', source: 'google' },
+  { label: 'Poppins', family: 'Poppins', source: 'google' },
+  { label: 'Nunito', family: 'Nunito', source: 'google' },
+  { label: 'Raleway', family: 'Raleway', source: 'google' },
+  { label: 'Source Sans 3', family: 'Source Sans 3', source: 'google' },
+  { label: 'Work Sans', family: 'Work Sans', source: 'google' },
+  { label: 'DM Sans', family: 'DM Sans', source: 'google' },
+  { label: 'Manrope', family: 'Manrope', source: 'google' },
+  { label: 'Rubik', family: 'Rubik', source: 'google' },
+  { label: 'Urbanist', family: 'Urbanist', source: 'google' },
+  { label: 'Outfit', family: 'Outfit', source: 'google' },
+  { label: 'Space Grotesk', family: 'Space Grotesk', source: 'google' },
+  { label: 'Josefin Sans', family: 'Josefin Sans', source: 'google' },
+  { label: 'Quicksand', family: 'Quicksand', source: 'google' },
+  { label: 'Comfortaa', family: 'Comfortaa', source: 'google' },
+  { label: 'Fira Sans', family: 'Fira Sans', source: 'google' },
+  { label: 'Karla', family: 'Karla', source: 'google' },
+  { label: 'Barlow', family: 'Barlow', source: 'google' },
+  { label: 'Archivo', family: 'Archivo', source: 'google' },
+  { label: 'Inconsolata', family: 'Inconsolata', source: 'google' },
+  { label: 'Cabin', family: 'Cabin', source: 'google' },
+  { label: 'Public Sans', family: 'Public Sans', source: 'google' },
+  { label: 'Noto Sans', family: 'Noto Sans', source: 'google' },
+  { label: 'Noto Serif', family: 'Noto Serif', source: 'google' },
+  { label: 'Alegreya', family: 'Alegreya', source: 'google' },
+  { label: 'Arvo', family: 'Arvo', source: 'google' },
+  { label: 'Bebas Neue', family: 'Bebas Neue', source: 'google' },
+  { label: 'Pacifico', family: 'Pacifico', source: 'google' },
+  { label: 'Caveat', family: 'Caveat', source: 'google' },
+  { label: 'System Sans', family: 'system-ui', source: 'system' },
+  { label: 'Georgia', family: 'Georgia', source: 'system' },
+  { label: 'Arial', family: 'Arial', source: 'system' },
+  { label: 'Trebuchet MS', family: 'Trebuchet MS', source: 'system' },
+  { label: 'Courier New', family: 'Courier New', source: 'system' }
+];
+
+export const DEFAULT_FONT_SETTINGS = {
+  headingFont: 'Playfair Display',
+  bodyFont: 'Inter'
+};
+
+export function getFontOption(family) {
+  return FONT_OPTIONS.find((font) => font.family === family) || null;
+}

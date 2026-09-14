@@ -9,6 +9,7 @@ import {
   Camera, Image as ImageIcon, Video, MapPin, Calendar, Tag, Search, Pin
 } from 'lucide-react';
 import DynamicIcon from '../components/DynamicIcon';
+import { DEFAULT_FONT_SETTINGS, FONT_OPTIONS } from '../data/fontOptions';
 
 export default function AdminPanel() {
   const { user, logoutUser, loading: authLoading } = useAuth();
@@ -87,7 +88,7 @@ export default function AdminPanel() {
   const [photoPreviewUrls, setPhotoPreviewUrls] = useState([]);
 
   // 5. Site Content Forms
-  const [contentSubTab, setContentSubTab] = useState('hero'); // 'hero' | 'qualities' | 'about'
+  const [contentSubTab, setContentSubTab] = useState('hero'); // 'hero' | 'qualities' | 'about' | 'contact' | 'typography'
   // Hero Fields
   const [heroTitle, setHeroTitle] = useState('');
   const [heroSubtitle, setHeroSubtitle] = useState('');
@@ -99,6 +100,7 @@ export default function AdminPanel() {
   // Qualities list is edited inline
   const [qualities, setQualities] = useState([]);
   const [contactContent, setContactContent] = useState({ intro: '', email: '', phone: '', location: '' });
+  const [fontSettings, setFontSettings] = useState(DEFAULT_FONT_SETTINGS);
 
   // Redirect if unauthenticated
   useEffect(() => {
@@ -141,7 +143,7 @@ export default function AdminPanel() {
       }
 
       // 4. Site Content keys
-      const siteKeys = ['hero', 'qualities', 'about', 'contact'];
+      const siteKeys = ['hero', 'qualities', 'about', 'contact', 'settings'];
       const fetchedContent = {};
       for (const key of siteKeys) {
         const res = await fetch(`${API_BASE_URL}/api/v1/admin/site-content/${key}`, { credentials: 'include' });
@@ -167,6 +169,9 @@ export default function AdminPanel() {
       }
       if (fetchedContent.qualities) {
         setQualities(fetchedContent.qualities || []);
+      }
+      if (fetchedContent.settings) {
+        setFontSettings({ ...DEFAULT_FONT_SETTINGS, ...fetchedContent.settings });
       }
 
     } catch (error) {
@@ -553,6 +558,34 @@ export default function AdminPanel() {
     } catch (err) {
       console.error(err);
       setCmsErrors(['Network error saving contact details.']);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleTypographySubmit = async (e) => {
+    e.preventDefault();
+    setCmsErrors([]);
+    setActionLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/site-content/settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: fontSettings }),
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        showSuccess('Typography settings updated!');
+        refreshData();
+      } else {
+        const data = await response.json();
+        setCmsErrors(data.errors || [data.message]);
+      }
+    } catch (err) {
+      console.error(err);
+      setCmsErrors(['Network error saving typography settings.']);
     } finally {
       setActionLoading(false);
     }
@@ -1298,6 +1331,12 @@ export default function AdminPanel() {
                   >
                     Contact Details
                   </button>
+                  <button
+                    onClick={() => setContentSubTab('typography')}
+                    className={`sub-tab-btn ${contentSubTab === 'typography' ? 'active' : ''}`}
+                  >
+                    Typography
+                  </button>
                 </div>
 
                 {/* Content sub-tab panels */}
@@ -1529,6 +1568,50 @@ export default function AdminPanel() {
                       <div className="form-actions mt-4">
                         <button type="submit" className="btn btn-primary" disabled={actionLoading}>
                           <Save size={16} /> Save Contact Details
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {contentSubTab === 'typography' && (
+                    <form onSubmit={handleTypographySubmit} className="glass-card content-form">
+                      <h3>Typography</h3>
+                      <p className="card-subtitle">Choose the typeface for the website title and headings, then choose the typeface for page content.</p>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label className="form-label" htmlFor="heading-font-input">Title & Heading Font</label>
+                          <select
+                            id="heading-font-input"
+                            className="glass-input"
+                            value={fontSettings.headingFont}
+                            onChange={(e) => setFontSettings({ ...fontSettings, headingFont: e.target.value })}
+                          >
+                            {FONT_OPTIONS.map((font) => (
+                              <option key={`heading-${font.family}`} value={font.family}>{font.label}{font.source === 'google' ? ' · Google Fonts' : ' · Device font'}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" htmlFor="body-font-input">Content & Body Font</label>
+                          <select
+                            id="body-font-input"
+                            className="glass-input"
+                            value={fontSettings.bodyFont}
+                            onChange={(e) => setFontSettings({ ...fontSettings, bodyFont: e.target.value })}
+                          >
+                            {FONT_OPTIONS.map((font) => (
+                              <option key={`body-${font.family}`} value={font.family}>{font.label}{font.source === 'google' ? ' · Google Fonts' : ' · Device font'}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="font-preview glass-card">
+                        <h4 style={{ fontFamily: `'${fontSettings.headingFont}', Georgia, serif` }}>A family story worth remembering</h4>
+                        <p style={{ fontFamily: `'${fontSettings.bodyFont}', system-ui, sans-serif` }}>This preview shows how headings and everyday content will read across the public website.</p>
+                      </div>
+                      <div className="form-actions mt-4">
+                        <button type="submit" className="btn btn-primary" disabled={actionLoading}>
+                          <Save size={16} /> Save Typography
                         </button>
                       </div>
                     </form>
