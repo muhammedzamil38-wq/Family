@@ -10,6 +10,7 @@
   --glass-border: rgba(255, 255, 255, 0.7);
   --glass-stroke: rgba(0, 0, 0, 0.06);
   --glass-shadow: 0 8px 32px 0 rgba(142, 131, 115, 0.08);
+  --header-bg: linear-gradient(110deg, rgba(255, 255, 255, 0.9), rgba(248, 245, 238, 0.82) 58%, rgba(255, 255, 255, 0.94));
   --accent: #8c7355;
   --accent-hover: #755f45;
   --accent-glow: rgba(140, 115, 85, 0.2);
@@ -35,6 +36,7 @@
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-stroke: rgba(255, 255, 255, 0.03);
   --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+  --header-bg: var(--glass-bg);
   --accent: #e5c158;
   --accent-hover: #f1d47a;
   --accent-glow: rgba(229, 193, 88, 0.25);
@@ -234,7 +236,7 @@ select.glass-input {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--glass-bg);
+  background: var(--header-bg);
   backdrop-filter: blur(var(--blur));
   -webkit-backdrop-filter: blur(var(--blur));
   border-bottom: 1px solid var(--glass-border);
@@ -559,9 +561,23 @@ select.glass-input {
   transform: scale(1.03);
 }
 
+.view-all-link-mobile {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .gallery-masonry-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .section-header > .view-all-link {
+    display: none;
+  }
+
+  .view-all-link-mobile {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
   }
 }
 
@@ -569,6 +585,7 @@ select.glass-input {
   .gallery-masonry-grid {
     grid-template-columns: 1fr;
   }
+
 }
 
 .section-header {

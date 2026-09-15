@@ -127,19 +127,24 @@ export default function Home() {
           </div>
 
           {featuredPhotos.length > 0 ? (
-            <div className="gallery-masonry-grid mt-4">
-              {featuredPhotos.map((photo) => (
-                <Link to="/gallery" key={photo._id} className="glass-card gallery-photo-card">
-                  <div className="photo-media-wrapper">
-                    {(photo.resourceType || 'image') === 'video' ? (
-                      <video src={getImageUrl(photo.imageUrl)} className="gallery-photo-img" muted preload="metadata" />
-                    ) : (
-                      <img src={getImageUrl(photo.imageUrl || photo.imagePath)} alt={photo.title} className="gallery-photo-img" loading="lazy" />
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <>
+              <div className="gallery-masonry-grid mt-4">
+                {featuredPhotos.map((photo) => (
+                  <Link to="/gallery" key={photo._id} className="glass-card gallery-photo-card">
+                    <div className="photo-media-wrapper">
+                      {(photo.resourceType || 'image') === 'video' ? (
+                        <video src={getImageUrl(photo.imageUrl)} className="gallery-photo-img" muted preload="metadata" />
+                      ) : (
+                        <img src={getImageUrl(photo.imageUrl || photo.imagePath)} alt={photo.title} className="gallery-photo-img" loading="lazy" />
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link to="/gallery" className="view-all-link view-all-link-mobile">
+                View All Photos <ArrowRight size={16} />
+              </Link>
+            </>
           ) : (
             <div className="glass-card empty-featured">
               <Camera size={40} className="empty-icon" />
